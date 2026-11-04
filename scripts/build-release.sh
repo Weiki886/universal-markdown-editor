@@ -27,6 +27,7 @@ docker run --rm \
 
 echo "Isolating production Composer namespaces..."
 docker run --rm \
+    --user "$(id -u):$(id -g)" \
     --volume "$ROOT_DIR:/app" \
     --workdir /app \
     "$COMPOSER_IMAGE" \
