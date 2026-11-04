@@ -1,0 +1,16 @@
+#!/bin/sh
+set -eu
+
+ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+
+if command -v composer >/dev/null 2>&1; then
+    exec composer "$@"
+fi
+
+exec docker run --rm \
+    --user "$(id -u):$(id -g)" \
+    --volume "$ROOT_DIR:/app" \
+    --workdir /app \
+    --env COMPOSER_CACHE_DIR=/tmp/composer-cache \
+    --env COMPOSER_HOME=/tmp/composer-home \
+    composer:2.8.12 "$@"

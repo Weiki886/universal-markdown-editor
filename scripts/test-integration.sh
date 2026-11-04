@@ -1,0 +1,44 @@
+#!/bin/sh
+set -eu
+
+ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+PLUGIN_SLUG=$(basename "$ROOT_DIR")
+WP_ENV="$ROOT_DIR/node_modules/.bin/wp-env"
+
+cd "$ROOT_DIR"
+
+if [ ! -x "$WP_ENV" ]; then
+    echo "wp-env is missing. Run npm ci first." >&2
+    exit 1
+fi
+
+npm run build
+"$WP_ENV" start
+
+if "$WP_ENV" run cli wp plugin is-active "$PLUGIN_SLUG" >/dev/null 2>&1; then
+    "$WP_ENV" run cli wp plugin deactivate "$PLUGIN_SLUG" --quiet
+fi
+
+activation_output=$("$WP_ENV" run cli wp plugin activate "$PLUGIN_SLUG" 2>&1)
+printf '%s\n' "$activation_output"
+
+if printf '%s\n' "$activation_output" | grep -Eq '(Warning|Fatal error|Parse error):'; then
+    echo "Plugin activation emitted a PHP error." >&2
+    exit 1
+fi
+
+if ! smoke_output=$(
+    "$WP_ENV" run cli wp eval-file \
+        "wp-content/plugins/$PLUGIN_SLUG/tests/integration/plugin-smoke.php" 2>&1
+); then
+    printf '%s\n' "$smoke_output"
+    echo "The WordPress integration smoke test failed." >&2
+    exit 1
+fi
+
+printf '%s\n' "$smoke_output"
+
+if printf '%s\n' "$smoke_output" | grep -Eq '(Warning|Fatal error|Parse error):'; then
+    echo "The integration smoke test emitted a PHP error." >&2
+    exit 1
+fi

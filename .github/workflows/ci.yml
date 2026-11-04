@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify plugin
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Install PHP dependencies
+        run: ./bin/composer install --no-interaction --prefer-dist
+
+      - name: Run JavaScript lint
+        run: npm run check:js
+
+      - name: Build admin assets
+        run: npm run build
+
+      - name: Run PHP unit tests
+        run: npm run test:php
+
+      - name: Audit dependency licenses
+        run: |
+          npm run check:licenses:self-test
+          npm run check:licenses
+
+      - name: Build release artifact
+        run: npm run build:release
+
+      - name: Run WordPress integration smoke test
+        run: npm run test:integration
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: universal-markdown-editor
+          path: dist/universal-markdown-editor
+          if-no-files-found: error
+          retention-days: 7
