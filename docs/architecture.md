@@ -52,16 +52,19 @@
 
 ### 2.2 依赖方向与打包
 
-| 依赖 | 用途 | 决策 |
-| --- | --- | --- |
-| `league/commonmark` 2.x | 服务端 CommonMark 解析及表格、删除线等扩展 | 生产依赖；#3 选择兼容 PHP 8.1 的维护版本并写入 `composer.lock` |
-| WordPress `wp_kses` 及 URL 协议过滤 | 生成 HTML 的第二道安全过滤 | 平台能力，不另造 HTML 白名单库 |
-| `@wordpress/scripts` | Gutenberg 资源构建和检查 | 开发依赖；lockfile 固定 |
-| WordPress 提供的 `@wordpress/*` 运行包 | 编辑器 UI、数据、组件、媒体库 | 构建时 external，运行时使用 WordPress 分发版本，不另打包 React |
-| PHP-Scoper | 为 Composer 生产依赖加插件专属前缀 | 仅构建期使用；#3 验证其版本和 scoping 结果，发布 ZIP 不包含全局未隔离的 `League\\` 自动加载 |
-| PHPUnit + WordPress 测试套件、JS 测试工具 | 单元和集成验证 | 仅开发依赖；#3 固定真实配置 |
+| 依赖 | 许可证 | 用途 | 决策 |
+| --- | --- | --- | --- |
+| `league/commonmark` 2.x | BSD-3-Clause | 服务端 CommonMark 解析及表格、删除线等扩展 | 生产依赖；#3 选择兼容 PHP 8.1 的维护版本并写入 `composer.lock` |
+| WordPress `wp_kses` 及 URL 协议过滤 | GPL-2.0-or-later | 生成 HTML 的第二道安全过滤 | 平台能力，不另造 HTML 白名单库 |
+| `@wordpress/scripts` | GPL-2.0-or-later | Gutenberg 资源构建和检查 | 开发依赖；lockfile 固定 |
+| WordPress 提供的 `@wordpress/*` 运行包 | GPL-2.0-or-later | 编辑器 UI、数据、组件、媒体库 | 构建时 external，运行时使用 WordPress 分发版本，不另打包 React |
+| PHP-Scoper | MIT | 为 Composer 生产依赖加插件专属前缀 | 仅构建期使用；#3 验证其版本和 scoping 结果，发布 ZIP 不包含全局未隔离的 `League\\` 自动加载 |
+| PHPUnit、PHPUnit Polyfills、WordPress 测试套件 | BSD-3-Clause、BSD-3-Clause、GPL-2.0-or-later | PHP 单元和 WordPress 集成验证 | 仅开发依赖；#3 固定真实配置 |
+| Jest、Testing Library | MIT、MIT | JavaScript 单元和交互测试 | 仅开发依赖；#3 固定真实配置 |
 
-生产 ZIP 只包含插件代码、构建后的后台资源、经过命名空间隔离的生产 vendor 和必要文档；不包含开发测试、node_modules、构建工具或秘密。依赖升级需重新跑解析差异、安全和冲突插件测试。
+插件自身以 `GPL-2.0-or-later` 发布，与 WordPress 生态兼容。上表记录直接依赖的许可证；#3 必须根据实际锁定版本复核 Composer/npm 元数据和传递依赖许可证，遇到不兼容或被撤销的许可证时停止引入。若插件许可证要与本决策不同，需先修订本节和 ADR，再开始打包。
+
+生产 ZIP 只包含插件代码、插件许可证、构建后的后台资源、经过命名空间隔离的生产 vendor、直接依赖许可证和必要文档；不包含开发测试、node_modules、构建工具或秘密。依赖升级需重新跑解析差异、许可证检查、安全检查和冲突插件测试。
 
 ## 3. 模块边界
 
