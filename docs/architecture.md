@@ -66,6 +66,14 @@
 
 生产 ZIP 只包含插件代码、插件许可证、构建后的后台资源、经过命名空间隔离的生产 vendor、直接依赖许可证和必要文档；不包含开发测试、node_modules、构建工具或秘密。依赖升级需重新跑解析差异、许可证检查、安全检查和冲突插件测试。
 
+### 2.3 插件入口与版本策略
+
+- 主入口固定为 `universal-markdown-editor.php`，文件头声明插件名称、`Version`、`Requires at least: 6.4`、`Requires PHP: 8.1` 和 `GPL-2.0-or-later`。
+- 主入口先检查 PHP/WordPress 版本，再加载经 Composer 隔离的生产依赖并启动 `UniversalMarkdownEditor\\` 命名空间；兼容性不满足时只停止加载和显示后台提示，不触发文章写入。
+- 插件版本采用 SemVer，并由 `UME_VERSION` 暴露；资产版本绑定插件版本，发布后版本和产物不可原地改写。首个开发版为 `0.1.0`，正式发布仍以 #8 的门禁为准。
+- 插件版本与 `_ume_converter_version` 相互独立：前者描述发行物，后者只描述 Markdown 转换及存储输出契约。普通修复不提高 converter version，语义变化按第 11 节处理。
+- 激活和停用钩子不得创建、修改或删除文章及插件 meta。当前版本不需要自定义数据库表或必须执行的激活迁移；卸载策略按 4.3 节保留数据。
+
 ## 3. 模块边界
 
 规划命名空间为 `UniversalMarkdownEditor\\`，REST 命名空间为 `ume/v1`，JS/CSS handle 前缀为 `ume-`，hook 前缀为 `ume_`。插件主入口仅负责兼容检查和容器装配。
