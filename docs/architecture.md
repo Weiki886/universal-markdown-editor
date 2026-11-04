@@ -1,6 +1,6 @@
 # Universal Markdown Editor for WordPress：第一版架构
 
-- 状态：Proposal，等待用户明确接受
+- 状态：Accepted；用户于 2026-11-04 明确接受第 12 节全部六项取舍
 - 产品依据：#1
 - 架构任务：#2
 - 决策记录：[ADR 0001](adr/0001-markdown-editor-and-storage.md)

@@ -1,6 +1,6 @@
 # ADR 0001：采用独立 Markdown 工作区与私有原文/标准 HTML 双存储
 
-- 状态：Proposed，等待用户接受
+- 状态：Accepted；用户于 2026-11-04 明确接受本 ADR
 - 日期：2026-11-04
 - 关联：#1、#2
 - 详细契约：[../architecture.md](../architecture.md)
