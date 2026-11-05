@@ -15,3 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PHP unit tests, license auditing, PHP 8.1 syntax checks, release packaging,
   and a pinned WordPress integration environment.
 - Dependency and license inventory.
+- Reusable Markdown-to-HTML converter version 1 with fixed CommonMark
+  extensions, golden fixtures, input limits, and controlled conversion errors.
+- WordPress HTML/URL sanitization and real WordPress security integration tests.
+- PHP 8.1-compatible PHPUnit object instantiation and patched build filesystem
+  dependencies.

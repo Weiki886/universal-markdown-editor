@@ -56,7 +56,20 @@ npm run build
 mkdir -p "$RELEASE_DIR/build"
 cp -R build/. "$RELEASE_DIR/build/"
 cp universal-markdown-editor.php LICENSE README.md CHANGELOG.md "$RELEASE_DIR/"
-cp -R src "$RELEASE_DIR/src"
+
+echo "Isolating plugin source dependency references..."
+docker run --rm \
+    --user "$(id -u):$(id -g)" \
+    --volume "$ROOT_DIR:/app" \
+    --workdir /app \
+    "$COMPOSER_IMAGE" \
+    php vendor/bin/php-scoper add-prefix \
+    src \
+    --output-dir="dist/universal-markdown-editor/src" \
+    --config=scoper-plugin.inc.php \
+    --prefix=UME_Vendor \
+    --force
+
 mkdir -p "$RELEASE_DIR/docs"
 cp docs/dependency-licenses.md "$RELEASE_DIR/docs/dependency-licenses.md"
 
@@ -86,7 +99,28 @@ docker run --rm \
             exit(1);
         }
 
-        echo "Scoped CommonMark runtime is available on PHP " . PHP_VERSION . ".\n";
+        require "/plugin/src/autoload.php";
+
+        $sanitizer = new class implements UniversalMarkdownEditor\Markdown\HtmlSanitizerInterface {
+            public function sanitize(string $html): string
+            {
+                return $html;
+            }
+        };
+        $pluginConverter = new UniversalMarkdownEditor\Markdown\Converter(null, $sanitizer);
+        $pluginHtml = $pluginConverter->convert("# Build verification");
+
+        if (get_class($pluginConverter) !== "UniversalMarkdownEditor\Markdown\Converter") {
+            fwrite(STDERR, "The plugin namespace was changed during release scoping.\n");
+            exit(1);
+        }
+
+        if ($pluginHtml !== "<h1>Build verification</h1>\n") {
+            fwrite(STDERR, "Scoped plugin conversion failed: " . $pluginHtml . "\n");
+            exit(1);
+        }
+
+        echo "Scoped CommonMark and plugin converter runtimes are available on PHP " . PHP_VERSION . ".\n";
     '
 
 echo "Checking release contents..."
@@ -102,6 +136,16 @@ for forbidden in \
 do
     if [ -e "$RELEASE_DIR/$forbidden" ]; then
         echo "Forbidden release path: $forbidden" >&2
+        exit 1
+    fi
+done
+
+for forbidden_symbol in \
+    'UME_Vendor\UniversalMarkdownEditor' \
+    'UME_Vendor\WP_HTML_Tag_Processor'
+do
+    if grep -R -F "$forbidden_symbol" "$RELEASE_DIR/src" >/dev/null; then
+        echo "Forbidden scoped plugin symbol: $forbidden_symbol" >&2
         exit 1
     fi
 done
