@@ -1,0 +1,29 @@
+{
+  "name": "universal-markdown-editor-for-wordpress",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Development tooling for the Universal Markdown Editor WordPress plugin.",
+  "license": "GPL-2.0-or-later",
+  "engines": {
+    "node": ">=22.22.2",
+    "npm": ">=10"
+  },
+  "scripts": {
+    "build": "wp-scripts build",
+    "build:release": "sh scripts/build-release.sh",
+    "check": "npm run check:js && npm run build && npm run test:php && npm run check:licenses",
+    "check:js": "wp-scripts lint-js src",
+    "check:licenses": "node scripts/check-licenses.mjs",
+    "check:licenses:self-test": "node scripts/check-licenses.mjs --self-test",
+    "check:php-syntax": "sh scripts/check-php-syntax.sh",
+    "env:destroy": "wp-env destroy",
+    "env:start": "wp-env start",
+    "env:stop": "wp-env stop",
+    "test:integration": "sh scripts/test-integration.sh",
+    "test:php": "sh scripts/test-php.sh"
+  },
+  "devDependencies": {
+    "@wordpress/env": "12.1.0",
+    "@wordpress/scripts": "37.1.0"
+  }
+}

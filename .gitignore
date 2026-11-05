@@ -1,0 +1,9 @@
+.DS_Store
+.codex/
+.phpunit.cache/
+.phpunit.result.cache
+.wp-env/
+build/
+dist/
+node_modules/
+vendor/

@@ -1,0 +1,26 @@
+<?php
+declare(strict_types=1);
+
+namespace UniversalMarkdownEditor;
+
+use UniversalMarkdownEditor\Admin\Assets;
+
+final class Plugin
+{
+    private static bool $booted = false;
+
+    public static function boot(): void
+    {
+        if (self::$booted) {
+            return;
+        }
+
+        self::$booted = true;
+
+        add_action('admin_enqueue_scripts', [Assets::class, 'enqueue']);
+        register_activation_hook(UME_FILE, [Lifecycle::class, 'activate']);
+        register_deactivation_hook(UME_FILE, [Lifecycle::class, 'deactivate']);
+
+        do_action('ume_loaded');
+    }
+}

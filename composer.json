@@ -1,0 +1,28 @@
+{
+  "name": "weiki886/universal-markdown-editor-for-wordpress",
+  "description": "A universal Markdown source editor for WordPress posts.",
+  "type": "wordpress-plugin",
+  "license": "GPL-2.0-or-later",
+  "require": {
+    "php": ">=8.1",
+    "league/commonmark": "2.10.7",
+    "nette/utils": "4.0.11"
+  },
+  "require-dev": {
+    "humbug/php-scoper": "0.18.20",
+    "phpunit/phpunit": "9.6.38",
+    "yoast/phpunit-polyfills": "4.0.0"
+  },
+  "config": {
+    "allow-plugins": {
+      "composer/installers": true
+    },
+    "sort-packages": true
+  },
+  "scripts": {
+    "check": [
+      "@test"
+    ],
+    "test": "phpunit"
+  }
+}
