@@ -1,7 +1,7 @@
 # Dependency and license inventory
 
 This document records the dependency set locked by `composer.lock` and
-`package-lock.json` for issue #3. It is an engineering audit, not a legal
+`package-lock.json` for issues #3 and #4. It is an engineering audit, not a legal
 opinion. Re-run the automated checks whenever either lockfile changes.
 
 ## Reproduction
@@ -45,11 +45,12 @@ The development graph contains 50 packages, including:
 
 | Direct package | Locked version | License |
 | --- | --- | --- |
+| `doctrine/instantiator` | `1.5.0` | MIT |
 | `humbug/php-scoper` | `0.18.20` | MIT |
 | `phpunit/phpunit` | `9.6.38` | BSD-3-Clause |
 | `yoast/phpunit-polyfills` | `4.0.0` | BSD-3-Clause |
 
-The remaining 47 packages are transitive test and build dependencies. The
+The remaining 46 packages are transitive test and build dependencies. The
 license checker validates every package in `composer.lock`, not only the direct
 entries listed above. Development dependencies are not copied into the release
 artifact.
@@ -83,3 +84,40 @@ WordPress-compatible copyleft expressions. It fails on unknown license
 expressions, missing Composer metadata, missing npm evidence, or changed
 license-file hashes. The self-test verifies representative accepted and
 rejected expressions before the lockfiles are audited.
+
+## Markdown parser upgrades
+
+The conversion core uses the exact `league/commonmark` version in
+`composer.json` and `composer.lock`. Its source is
+<https://github.com/thephpleague/commonmark>, licensed under BSD-3-Clause.
+Version 1 of the conversion contract is tested against 2.10.7 on PHP 8.1.
+
+Before upgrading the parser, review the upstream changelog and security notes,
+choose an exact release that supports PHP 8.1, and update the lockfile with:
+
+```sh
+./bin/composer require league/commonmark:<exact-version> --with-dependencies
+npm run check
+npm run test:integration
+npm run build:release
+./bin/composer audit --locked
+```
+
+Review every golden fixture difference against the accepted architecture rather
+than blindly accepting new output. A syntax or sanitization change may require
+a converter version increment and a design record under `docs/adr/`. Confirm
+that production packages remain PHP 8.1 compatible, namespace-scoped, and
+covered by the automated license policy.
+
+## Test and build compatibility notes
+
+`doctrine/instantiator` is pinned to 1.5.0 because PHPUnit uses it for failure
+injection and test doubles on the PHP 8.1 test runtime. The previously resolved
+2.1.0 release requires PHP 8.4 and cannot parse on the declared test baseline.
+It is a development-only dependency and is excluded from the release artifact.
+
+PHP-Scoper and parts of its dependency graph run in the build container on a
+newer PHP version; they are not runtime requirements of the plugin. The locked
+`symfony/filesystem` build dependency is 7.4.23, which includes the fix for
+GHSA-6prc-h956-hxjq. Run `./bin/composer audit --locked` after lockfile changes
+and before publishing an artifact.
