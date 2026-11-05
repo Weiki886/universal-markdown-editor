@@ -45,6 +45,9 @@ $check(class_exists(\UniversalMarkdownEditor\Plugin::class), 'The namespaced Plu
 $check(class_exists(\UniversalMarkdownEditor\Lifecycle::class), 'The namespaced Lifecycle class did not load.');
 $check(class_exists(\UniversalMarkdownEditor\Admin\Assets::class), 'The namespaced Assets class did not load.');
 $check(class_exists(\UniversalMarkdownEditor\REST\MarkdownPreviewController::class), 'The Markdown preview controller did not load.');
+$check(class_exists(\UniversalMarkdownEditor\REST\MarkdownDocumentController::class), 'The Markdown document controller did not load.');
+$check(class_exists(\UniversalMarkdownEditor\Post\MarkdownRepository::class), 'The Markdown repository did not load.');
+$check(class_exists(\UniversalMarkdownEditor\Post\SaveService::class), 'The Markdown save service did not load.');
 $check(
     has_action('admin_enqueue_scripts', [\UniversalMarkdownEditor\Admin\Assets::class, 'enqueue']) !== false,
     'The admin asset hook is not registered.'
@@ -52,6 +55,14 @@ $check(
 $check(
     has_action('rest_api_init', [\UniversalMarkdownEditor\REST\MarkdownPreviewController::class, 'registerRoutes']) !== false,
     'The Markdown preview REST route hook is not registered.'
+);
+$check(
+    has_action('rest_api_init', [\UniversalMarkdownEditor\REST\MarkdownDocumentController::class, 'registerRoutes']) !== false,
+    'The Markdown document REST route hook is not registered.'
+);
+$check(
+    has_action('init', [\UniversalMarkdownEditor\Post\MarkdownRepository::class, 'registerMeta']) !== false,
+    'The private Markdown metadata registration hook is not registered.'
 );
 $check(
     has_action('deactivate_' . $pluginBasename, [\UniversalMarkdownEditor\Lifecycle::class, 'deactivate']) !== false,

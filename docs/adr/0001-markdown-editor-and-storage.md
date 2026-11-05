@@ -77,3 +77,8 @@
 ## 变更方式
 
 本 ADR 被接受后状态改为 Accepted。后续推翻或重大修改时新增 ADR 并链接本记录，不删除本决策的历史上下文。
+
+## 2026-11-05 实施补充
+
+- 保存基线对受管文章增加 `baseSourceHash`，防止两份渲染为相同 HTML 的 Markdown 在并发保存时互相覆盖；普通文章该值为 `null`。
+- 保存前后显式建立并核验 revision。执行 post 更新时暂时移除 WordPress 自动 revision hook，避免产生新 `post_content` 搭配旧 Markdown meta 的中间 revision；无 revision 能力时仍使用内存快照和补偿恢复。

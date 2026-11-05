@@ -5,9 +5,9 @@ planned editor keeps the Markdown source private while storing safe, standard
 HTML in `post_content`, so the front end and native WordPress workflows remain
 usable.
 
-> **Project status:** early scaffold. The plugin can be installed and activated,
-> but the Markdown editor is not implemented yet and this project is not ready
-> for production use.
+> **Project status:** the Gutenberg Markdown workspace, server-rendered preview,
+> and dual Markdown/HTML storage are under active development. The plugin is
+> not yet ready for production use; follow the linked Issues and CI status.
 
 ## Quick Start
 
@@ -30,8 +30,9 @@ The local site is available at <http://localhost:8888/wp-admin> with the
 
 `npm run check` runs the JavaScript lint, production asset build, PHP unit
 suite, and dependency license audit. `npm run test:integration` starts the
-pinned WordPress environment and verifies plugin activation, lifecycle hooks,
-version metadata, and admin asset gating.
+pinned WordPress environment and verifies plugin activation, editor asset
+gating, server-side preview, private Markdown storage, permissions, revisions,
+conflict handling, and failed-save recovery.
 
 ## Development environment
 
@@ -59,15 +60,15 @@ and verifies the isolated runtime on PHP 8.1.
 
 ## Safety and data boundaries
 
-The current scaffold does not read, create, update, or delete posts or plugin
-metadata. Activation and deactivation only register and fire namespaced
-lifecycle hooks.
-
-The accepted architecture requires server-side Markdown conversion, WordPress
-HTML sanitization, per-post permission checks, and private post meta. Those
-editor and persistence behaviors are not implemented in this issue. Do not
-store secrets or production content in issues, pull requests, logs, fixtures,
-or test environments.
+The editor reads Markdown sessions only for users who can edit the requested
+post. Markdown source and consistency metadata are stored in private post meta;
+`post_content` contains server-converted and sanitized standard HTML. Saving
+checks an editing baseline, preserves revisions when enabled, verifies the
+stored values, and attempts snapshot-based compensation if a write fails.
+Deactivation leaves post content intact. These features are still under active
+development and must pass the WordPress integration suite before production
+use. Do not store secrets or production content in issues, pull requests, logs,
+fixtures, or test environments.
 
 ## Documentation
 
