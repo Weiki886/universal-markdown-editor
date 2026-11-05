@@ -61,7 +61,12 @@ $unmanagedResponse = $request('GET', $existingId);
 $unmanaged = $unmanagedResponse->get_data();
 $check($unmanagedResponse->get_status() === 200, 'An authorized editor could not load a Markdown session.');
 $check(is_array($unmanaged) && ($unmanaged['managed'] ?? null) === false, 'An ordinary post was reported as Markdown-managed.');
-$check(is_array($unmanaged) && ($unmanaged['source'] ?? 'missing') === null, 'An ordinary post exposed a fabricated Markdown source.');
+$check(
+    is_array($unmanaged)
+        && array_key_exists('source', $unmanaged)
+        && $unmanaged['source'] === null,
+    'An ordinary post exposed a fabricated Markdown source.'
+);
 $check(is_array($unmanaged) && ($unmanaged['html'] ?? null) === '<p>Existing HTML</p>', 'The ordinary post HTML was not returned as the preview baseline.');
 $check(is_array($unmanaged) && ($unmanaged['contentHash'] ?? null) === hash('sha256', '<p>Existing HTML</p>'), 'The unmanaged content hash is incorrect.');
 
@@ -77,7 +82,13 @@ $check(
     $saveResponse->get_status() === 200,
     'An authorized post editor could not save Markdown: HTTP '
         . $saveResponse->get_status() . ' '
-        . wp_json_encode($saved)
+        . wp_json_encode([
+            'response' => $saved,
+            'baseline' => [
+                'contentHash' => $unmanaged['contentHash'] ?? null,
+                'modifiedGmt' => $unmanaged['modifiedGmt'] ?? null,
+            ],
+        ])
 );
 $check(is_array($saved) && ($saved['managed'] ?? null) === true, 'A successful save did not mark the post as managed.');
 $check(is_array($saved) && ($saved['source'] ?? null) === $source, 'A successful save changed the Markdown source bytes.');
