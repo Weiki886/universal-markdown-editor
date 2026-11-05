@@ -39,6 +39,15 @@ final class Assets
             [],
             isset($asset['version']) ? (string) $asset['version'] : UME_VERSION
         );
+
+        wp_localize_script(
+            self::HANDLE,
+            'umeSettings',
+            [
+                'root' => esc_url_raw(rest_url()),
+                'nonce' => wp_create_nonce('wp_rest'),
+            ]
+        );
     }
 
     public static function shouldEnqueue(string $hookSuffix, ?object $screen): bool

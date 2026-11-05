@@ -44,9 +44,14 @@ $check($wordpressVersion === '7.1.4', 'The integration environment is not pinned
 $check(class_exists(\UniversalMarkdownEditor\Plugin::class), 'The namespaced Plugin class did not load.');
 $check(class_exists(\UniversalMarkdownEditor\Lifecycle::class), 'The namespaced Lifecycle class did not load.');
 $check(class_exists(\UniversalMarkdownEditor\Admin\Assets::class), 'The namespaced Assets class did not load.');
+$check(class_exists(\UniversalMarkdownEditor\REST\MarkdownPreviewController::class), 'The Markdown preview controller did not load.');
 $check(
     has_action('admin_enqueue_scripts', [\UniversalMarkdownEditor\Admin\Assets::class, 'enqueue']) !== false,
     'The admin asset hook is not registered.'
+);
+$check(
+    has_action('rest_api_init', [\UniversalMarkdownEditor\REST\MarkdownPreviewController::class, 'registerRoutes']) !== false,
+    'The Markdown preview REST route hook is not registered.'
 );
 $check(
     has_action('deactivate_' . $pluginBasename, [\UniversalMarkdownEditor\Lifecycle::class, 'deactivate']) !== false,
@@ -86,6 +91,7 @@ $GLOBALS['current_screen'] = WP_Screen::get('post');
 
 $check(wp_script_is('ume-admin', 'enqueued'), 'The editor script was not enqueued on the post editor.');
 $check(wp_style_is('ume-admin', 'enqueued'), 'The editor style was not enqueued on the post editor.');
+$check(wp_script_is('ume-admin', 'registered'), 'The editor script was not registered.');
 
 wp_dequeue_script('ume-admin');
 wp_dequeue_style('ume-admin');
