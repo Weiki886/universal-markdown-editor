@@ -61,16 +61,19 @@ $check(get_post_meta($postId) === $metaBefore, 'Preview changed post metadata.')
 $check(get_post_field('post_modified_gmt', $postId) === $postBefore->post_modified_gmt, 'Preview changed the post modified time.');
 
 $emptyRequest = new WP_REST_Request('POST', '/ume/v1/posts/' . $postId . '/markdown/preview');
+$emptyRequest->set_header('content-type', 'application/json');
 $emptyRequest->set_body(wp_json_encode(['source' => '']));
 $emptyResponse = rest_do_request($emptyRequest);
 $check($emptyResponse->get_status() === 200 && ($emptyResponse->get_data()['html'] ?? null) === '', 'An empty Markdown source was rejected.');
 
 $invalidRequest = new WP_REST_Request('POST', '/ume/v1/posts/' . $postId . '/markdown/preview');
+$invalidRequest->set_header('content-type', 'application/json');
 $invalidRequest->set_body(wp_json_encode(['source' => ['not', 'a', 'string']]));
 $invalidResponse = rest_do_request($invalidRequest);
 $check($invalidResponse->get_status() === 400, 'A non-string Markdown source was not rejected as invalid input.');
 
 $oversizedRequest = new WP_REST_Request('POST', '/ume/v1/posts/' . $postId . '/markdown/preview');
+$oversizedRequest->set_header('content-type', 'application/json');
 $oversizedRequest->set_body(wp_json_encode(['source' => str_repeat('x', 1048577)]));
 $oversizedResponse = rest_do_request($oversizedRequest);
 $check($oversizedResponse->get_status() === 413, 'Markdown source above 1 MiB was not rejected with HTTP 413.');
