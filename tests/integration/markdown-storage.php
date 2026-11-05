@@ -152,7 +152,7 @@ $check(get_post_meta($existingId, '_ume_markdown_source', true) === $sourceWithE
 
 $conflictResponse = $request('PUT', $existingId, [
     'source' => '# Must Not Overwrite',
-    'baseContentHash' => $sourceOnlySaved['contentHash'] ?? '',
+    'baseContentHash' => hash('sha256', 'stale rendered content baseline'),
     'baseModifiedGmt' => $sourceOnlySaved['modifiedGmt'] ?? '',
     'baseSourceHash' => $sourceOnlySaved['sourceHash'] ?? null,
 ]);
