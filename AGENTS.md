@@ -1,178 +1,206 @@
 # AGENTS.md
 
-本文件约束本仓库中的所有设计、开发、测试、审查和 GitHub 协作活动。开始工作前阅读本文件；子目录如有更具体的 `AGENTS.md`，在其范围内优先遵循子目录规则。
+This file governs all design, development, testing, review, and GitHub collaboration activities in this repository. Read it before starting work. If a subdirectory contains a more specific `AGENTS.md`, follow that file within its scope.
 
-## 1. 项目定位
+## 1. Project Positioning
 
-**Universal Markdown Editor for WordPress** 是一个独立、通用、公开维护的 WordPress 插件，为习惯 Markdown 源码写作的用户提供 Gutenberg 编辑体验。
+**Universal Markdown Editor for WordPress** is an independent, general-purpose, publicly maintained WordPress plugin that gives users who prefer Markdown source writing a Gutenberg editing experience.
 
-第一版目标：在文章编辑页提供 Markdown 源码编辑、实时预览、常用工具栏和 WordPress 媒体库插入，并保留可继续编辑的 Markdown 原文及主题可直接渲染的标准 HTML。
+The first version aims to provide Markdown source editing, live preview, a common formatting toolbar, and WordPress media library insertion on the post editing screen. It must also preserve editable Markdown source and standard HTML that themes can render directly.
 
-不可放松的产品边界：
+Product boundaries that must not be relaxed:
 
-- 不依赖 2BLOG、其他特定主题、LeanCloud、私有 API 或站点专属资源。
-- 前台内容必须是 WordPress 标准 `post_content`，普通主题无需适配。
-- Markdown 原文保存在插件私有 post meta；最终字段、空值语义、REST 可见性、转换版本及迁移策略以 #2 的架构决策为准，不提前把示例字段当作已定契约。
-- 服务端负责可信解析和安全过滤；浏览器预览不得直接作为持久化 HTML。
-- 已有文章不得被无提示覆盖。新建、更新、自动保存、模式切换、失败恢复、停用和卸载均须保护用户内容。
-- 保存接口必须验证登录状态、具体文章或媒体权限以及 nonce；私有 Markdown 不得暴露给未授权访客。
-- 代码高亮必须可配置，默认避免与主题重复处理。
+- Do not depend on 2BLOG, another specific theme, LeanCloud, private APIs, or site-specific resources.
+- Front-end content must use the standard WordPress `post_content` field. Regular themes must not require special adaptation.
+- Store Markdown source in plugin-private post meta. Final field names, empty-value semantics, REST visibility, conversion versions, and migration strategy are governed by the architecture decision in #2. Do not treat example fields as an established contract before that decision is accepted.
+- The server owns trusted parsing and security filtering. Browser previews must never be used directly as persisted HTML.
+- Never overwrite existing posts without warning. New posts, updates, autosaves, mode switches, failure recovery, deactivation, and uninstallation must all protect user content.
+- Save endpoints must verify authentication, specific post or media permissions, and nonces. Private Markdown must not be exposed to unauthorized visitors.
+- Code highlighting must be configurable. By default, avoid duplicating theme-level code highlighting.
 
-第一版明确不做：经典编辑器适配、AI 写作、多人协作、云同步、替换全部 Gutenberg 区块、主题专属短代码及 WordPress.org 正式发布。新增范围须先更新产品设计与关联 Issue，不得在实现中悄悄扩大。
+The first version explicitly excludes classic editor support, AI writing, multi-user collaboration, cloud synchronization, replacement of all Gutenberg blocks, theme-specific shortcodes, and a formal WordPress.org release. Any new scope must first update the product design and relevant Issue. Do not expand scope silently during implementation.
 
-## 2. 事实来源与当前阶段
+## 2. Sources of Truth and Current Phase
 
-按以下优先级核对需求；发现冲突时先报告并澄清，不自行选择最方便的解释：
+Resolve requirements using the following priority order. If sources conflict, report the conflict and clarify it instead of choosing the most convenient interpretation:
 
-1. 用户在当前任务中的明确要求和已确认取舍。
-2. 已接受的 Proposal、架构文档和 ADR。
-3. 关联 Issue 的目标、非目标、依赖和验收标准。
-4. 仓库现有代码、测试、文档和工程配置。
-5. 本文件及所引用的 skills 中的通用流程。
+1. Explicit user requirements and confirmed decisions in the current task.
+2. Accepted Proposals, architecture documents, and ADRs.
+3. Goals, non-goals, dependencies, and acceptance criteria of the relevant Issue.
+4. Existing repository code, tests, documentation, and engineering configuration.
+5. The general workflow in this file and the referenced skills.
 
-核心项目资料：
+Core project references:
 
-- #1「定义第一版通用 Markdown 编辑器 MVP」：产品范围与验收来源。
-- #2「确定插件架构、编辑模式与数据契约」：模块边界、状态流、数据契约与安全边界。
-- #3 → #4 → #5 → #6 → #7 → #8：当前计划的实现依赖顺序；跨顺序工作须先确认依赖已经满足。
-- `docs/architecture.md`、`docs/adr/`：作为已接受的架构事实来源。
+- #1, "Define the first universal Markdown editor MVP": source of product scope and acceptance criteria.
+- #2, "Define the plugin architecture, editing modes, and data contract": source of module boundaries, state flow, data contract, and security boundaries.
+- #3 -> #4 -> #5 -> #6 -> #7 -> #8: current planned implementation dependency order. Work that crosses this order must first confirm that its dependencies are satisfied.
+- `docs/architecture.md` and `docs/adr/`: accepted sources of architectural truth.
 
-**当前处于 #4 Markdown 转换核心实现阶段。** #1 产品方向和 #2 架构已经获得用户明确接受，#3 插件骨架已经合并。实现范围以 #4 的验收标准和当前 Issue 分支为准，不提前实现 #5 之后的编辑器、REST 或保存功能。
+The product direction in #1 and the architecture in #2 have been explicitly accepted by the user. Subsequent implementation follows the dependency order #3 -> #4 -> #5 -> #6 -> #7 -> #8. **The current phase must not be hard-coded in this file.** Before starting a task, verify the latest `origin/main`, GitHub Issue and PR states, and the actual working branch. A created or pushed PR is not a merged PR. Start work that depends on a prior PR only after that PR has merged and the related Issue is complete.
 
-仓库公开。不得把密钥、凭据、真实用户数据、私有站点地址、生产文章或未授权第三方代码写入代码、文档、Issue、PR、日志、测试夹具或提交记录。
+The repository is public. Do not write secrets, credentials, real user data, private site addresses, production posts, or unauthorized third-party code into code, documentation, Issues, PRs, logs, test fixtures, or commit history.
 
-## 3. 工作方式与 skills
+## 3. Working Approach and Skills
 
-本项目是个人维护、公开、多迭代的项目，采用轻量 team 流程：保留 `Proposal/ADR → Issue → 短生命周期分支 → Commit → PR → Review/CI → Merge → Release` 的可追溯链；不强制 CODEOWNERS、DORA 或与当前规模不匹配的治理开销。
+This is a publicly maintained, multi-iteration project maintained by an individual. Use a lightweight team workflow: preserve the traceable chain of `Proposal/ADR -> Issue -> short-lived branch -> Commit -> PR -> Review/CI -> Merge -> Release`, without imposing CODEOWNERS, DORA metrics, or governance overhead that does not match the project's current scale.
 
-按任务读取并遵循对应本地 skill，不凭文件名猜测其内容：
+Read and follow the relevant local skill for each task. Do not infer its contents from the filename:
 
-- 产品与范围：`/Users/yang/.codex/skills/product-design/SKILL.md`
-- GitHub 交付：`/Users/yang/.cc-switch/skills/github-engineering-workflow/SKILL.md`
-- 实现与缺陷修复：`/Users/yang/.codex/skills/code-implementation/SKILL.md`
-- 测试设计与验证：`/Users/yang/.codex/skills/code-testing/SKILL.md`
-- 代码审查：`/Users/yang/.codex/skills/code-review/SKILL.md`
-- README 创建或修改：`/Users/yang/.codex/skills/project-readme/SKILL.md`
+- Product and scope: `/Users/yang/.codex/skills/product-design/SKILL.md`
+- GitHub delivery: `/Users/yang/.cc-switch/skills/github-engineering-workflow/SKILL.md`
+- Implementation and bug fixes: `/Users/yang/.codex/skills/code-implementation/SKILL.md`
+- Test design and verification: `/Users/yang/.codex/skills/code-testing/SKILL.md`
+- Code review: `/Users/yang/.codex/skills/code-review/SKILL.md`
+- README creation or modification: `/Users/yang/.codex/skills/project-readme/SKILL.md`
 
-这些规范有分工：产品 skill 决定做什么，工程 skill 管理交付链，实现 skill 负责 TDD，测试 skill 负责验证证据，审查 skill 独立收口。测试全绿不代表已经通过 Review、CI 或发布门禁。
+These standards have distinct responsibilities. The product skill determines what to build; the engineering skill governs the delivery chain; the implementation skill owns TDD; the testing skill owns verification evidence; and the review skill independently closes out review. Passing tests does not mean Review, CI, or release gates have passed.
 
-执行原则：
+Execution principles:
 
-- 先确认任务、验收标准、非目标、授权范围和风险，再修改。
-- 一次只做一个可独立验证的小增量；不顺手重构、不制造无关格式化噪音。
-- 能用 WordPress 平台能力或成熟、仍维护且许可证兼容的依赖解决时，不重复造轮子；新增依赖须先由架构决策确认来源、版本、许可证、安全与打包方式。
-- 计划与实际情况冲突时，区分计划错误和实现错误；将偏离及理由记录在关联 PR、Issue 或后续设计决策中，不私下改变契约。
-- 工具不可用时如实说明并采用可行的替代验证；不得声称调用过不存在的工具、环境或检查。
-- 尊重工作区已有改动。修改前查看 `git status --short --branch`；不覆盖、回滚或提交用户及他人的无关改动，不提交 `.DS_Store`。
+- Confirm the task, acceptance criteria, non-goals, authorization scope, and risk before making changes.
+- Deliver one independently verifiable increment at a time. Do not refactor opportunistically or introduce unrelated formatting noise.
+- Prefer WordPress platform capabilities or mature, maintained dependencies with compatible licenses over reinventing functionality. Before adding a dependency, confirm its source, version, license, security posture, and packaging method through an architecture decision.
+- When the plan conflicts with reality, distinguish a planning error from an implementation error. Record the deviation and its rationale in the relevant PR, Issue, or a later design decision. Do not change the contract privately.
+- If a tool is unavailable, state that fact and use a feasible alternative verification method. Never claim to have used a tool, environment, or check that does not exist or was not used.
+- Respect existing workspace changes. Before editing, inspect `git status --short --branch`. Do not overwrite, revert, or commit unrelated changes made by the user or others. Do not commit `.DS_Store`.
+- Continuous development does not justify skipping gates. After pushing a PR, monitor and fix CI. Before human Review and merge, do not stack dependent work on the same branch and do not merge the PR yourself.
 
-## 4. 设计与架构门禁
+## 4. Design and Architecture Gates
 
-设计任务先写回理解，分开「用户已明确」与「待确认假设」；未知内容标为 TBD，不编造兼容性、版本、性能或竞品结论。
+For design tasks, first write back your understanding and separate "explicitly stated by the user" from "assumptions requiring confirmation." Mark unknown information as TBD. Do not fabricate compatibility, version, performance, or competitor conclusions.
 
-每份 Proposal 必须呈现：备选方案、选择与理由、明确不做、边界、实例和验收标准。涉及 UI 时先定文字行为，再基于已确认文字制作原型。定稿设计只读演化：需求变化新增修订或后续 Proposal，不覆盖旧判断；技术决策变化追加新 ADR。
+Every Proposal must present alternatives, the selected option and rationale, explicit non-goals, boundaries, examples, and acceptance criteria. For UI work, define textual behavior before producing a prototype based on confirmed wording. Treat finalized designs as read-only history: add revisions or a follow-up Proposal when requirements change. Do not overwrite earlier judgments. Append a new ADR when technical decisions change.
 
-#2 至少固定以下事项后才能进入实现：
+Implementation must not begin until #2 has fixed at least the following:
 
-- Gutenberg 集成方式，以及不破坏原生区块数据的理由。
-- 编辑、预览、保存、模式切换、冲突和失败恢复状态流。
-- Markdown 原文、HTML、来源模式和转换版本的数据契约。
-- 新文章、已有 Gutenberg 文章、已有经典 HTML 文章的处理策略。
-- 服务端与浏览器解析的一致性策略。
-- PHP、WordPress 支持范围及依赖、许可证、打包方式。
-- HTML 白名单、危险 URL、权限、nonce 与私有 meta 边界。
-- 停用、卸载、转换失败、恢复与迁移策略。
+- The Gutenberg integration method and the rationale for preserving native block data.
+- State flows for editing, preview, saving, mode switching, conflicts, and failure recovery.
+- The data contract for Markdown source, HTML, source mode, and conversion version.
+- Handling strategy for new posts, existing Gutenberg posts, and existing classic HTML posts.
+- The consistency strategy between server-side and browser parsing.
+- Supported PHP and WordPress ranges, dependencies, licenses, and packaging method.
+- HTML allowlist, dangerous URLs, permissions, nonces, and private meta boundaries.
+- Deactivation, uninstallation, conversion failure, recovery, and migration strategy.
 
-架构必须描述真实模块职责、接口和依赖方向，不能用目录树或技术栈清单代替。
+Architecture documentation must describe actual module responsibilities, interfaces, and dependency directions. A directory tree or technology list does not substitute for architecture.
 
-## 5. Issue、分支与 PR 协作
+## 5. Issue, Branch, and PR Collaboration
 
 ### Definition of Ready
 
-开始实现前必须满足：
+The following conditions must be met before implementation begins:
 
-- 有用户已接受的产品与架构依据，关联 Issue 的范围和验收标准明确。
-- 前置 Issue 已完成，或已明确说明可并行工作的接口契约。
-- Issue 含背景、目标、非目标、关联、风险及依据、子任务和验证计划。
-- 已确认工作分支、当前未提交改动、公开信息边界和实际可用的验证方式。
-- 风险标签与正文风险判断一致；发现不一致先澄清或修正，不带病进入实现。
+- A user-accepted product and architecture basis exists, and the relevant Issue has clear scope and acceptance criteria.
+- Prerequisite Issues are complete, or interface contracts that permit parallel work have been explicitly documented.
+- The Issue includes background, goals, non-goals, relationships, risk and rationale, subtasks, and a verification plan.
+- The working branch, current uncommitted changes, public-information boundary, and available verification methods have been confirmed.
+- GitHub has been used to verify the actual state of prerequisite Issues and PRs. An open PR, a closed-but-unmerged PR, or a local commit alone does not count as merged.
+- Risk labels match the risk assessment in the body. Resolve or clarify any mismatch before beginning implementation.
 
-不满足时继续设计或澄清，不写生产代码。
+If readiness is not satisfied, continue designing or clarifying. Do not write production code.
 
-### GitHub 元数据
+### GitHub Metadata
 
-- 沿用仓库现有 `enhancement`、`architecture`、`infrastructure`、`documentation`、`security`、`testing` 等类型/领域标签。
-- 每个 Issue 和 PR 至少有一个适用的类型或领域标签，以及恰好一个 `risk:low`、`risk:standard`、`risk:high` 或 `risk:emergency` 标签；正文写明风险依据。
-- `low`：文档、测试或不改变运行行为的机械改动。
-- `standard`：边界清楚、可独立回滚的一般功能或修复。
-- `high`：权限、隐私、XSS、公开接口、数据持久化/迁移、依赖供应链、发布物或较大影响面。
-- `emergency`：仅限正在发生的服务或安全事件，且必须获得用户明确授权；事后补齐门禁和复盘。
-- 风险标签不替代正文依据，也不以“个人项目”为由降低安全或数据风险。
-- Milestone 按可验收迭代组织，不与 Git Tag、Label 或 Issue 状态混用。发布 Tag 使用不可变的 `vMAJOR.MINOR.PATCH`。
+- **All GitHub Issue and pull-request titles and bodies must be written in English.** Branch names and commit titles must also be in English. Preserve code identifiers, labels, URLs, version numbers, and exact quotations from external sources in their original form when required; translate the surrounding explanation into English.
+- Continue using the repository's existing type and domain labels, including `enhancement`, `architecture`, `infrastructure`, `documentation`, `security`, and `testing`.
+- Every Issue and PR must have at least one applicable type or domain label and exactly one of `risk:low`, `risk:standard`, `risk:high`, or `risk:emergency`. The body must state the risk rationale.
+- `low`: documentation, tests, or mechanical changes that do not alter runtime behavior.
+- `standard`: a well-bounded, independently reversible general feature or fix.
+- `high`: permissions, privacy, XSS, public interfaces, data persistence or migration, dependency supply chain, release artifacts, or a similarly large blast radius.
+- `emergency`: restricted to an active service or security incident and requires explicit user authorization. Complete the normal gates and incident review afterward.
+- Risk labels do not replace the rationale in the body, and the project being maintained by an individual is not a reason to lower security or data risk.
+- Organize Milestones around verifiable iterations. Do not confuse them with Git Tags, Labels, or Issue states. Release Tags must be immutable `vMAJOR.MINOR.PATCH` values.
 
-### 分支与提交
+### Branches and Commits
 
-- 默认分支为 `main`；禁止直接推送或提交到 `main`，通过短生命周期分支和 PR 交付。
-- 分支命名：`<type>/<issue>-<slug>`，例如 `feat/5-markdown-editor`、`docs/2-architecture`；使用小写英文、数字和短横线，一个分支只服务一个 Issue 目标。
-- 新分支从最新 `origin/main` 创建。复用当前分支前先确认它属于当前任务；不得在已有分支上改变任务语义。
-- Commit 使用 Conventional Commits：`<type>(<scope>): <summary>`；分支名、Commit 标题和 PR 标题一律英文，正文可中文。
-- 每个 Commit 表达一个完整意图，不包含无关文件。提交前重新检查 diff 与验证结果。
-- Push、合并、关闭 Issue、创建 Release 或修改远程仓库设置需要当前任务授权；不得把本地完成等同于远程交付完成。
+- The default branch is `main`. Never push or commit directly to `main`. Deliver through short-lived branches and PRs.
+- Name branches `<type>/<issue>-<slug>`, for example `feat/5-markdown-editor` or `docs/2-architecture`. Use lowercase English letters, numbers, and hyphens. One branch serves one Issue goal.
+- Before creating a new branch, run `git fetch origin --prune` and create it from the latest `origin/main` while the worktree is clean. Before reusing a current branch, confirm that it belongs to the current task. Do not change the semantic purpose of an existing branch, and do not mix collaboration documentation or unrelated fixes into an unmerged feature PR.
+- Use Conventional Commits: `<type>(<scope>): <summary>`. Branch names, commit titles, Issue titles and bodies, and PR titles and bodies must be in English.
+- Each commit must express one complete intent and must not include unrelated files. Recheck the diff and verification results before committing, and stage only explicitly listed files. Local or generated content such as `.DS_Store`, `.codex/`, `dist/`, `build/`, `vendor/`, and `node_modules/` must not enter commits.
+- Push, merge, close Issues, create Releases, or change remote repository settings require authorization for the current task. Do not treat local completion as remote delivery.
 
-### PR 与 Review
+### PRs and Review
 
-- PR 用 `Closes #<issue>` 或适当关联词连接 Issue；若只是阶段性设计草案，不误关 Issue。
-- PR 正文说明问题、关键改动、风险及依据、验证证据、兼容性、数据影响、停用/回滚方式和未覆盖项，并同步适用标签。
-- 先自审，再由用户或合适的人类 Reviewer 审查。AI 自审不能冒充人工批准，不自行批准自己的 PR。
-- Review 固定 base/head 和需求来源，分别检查规范符合度与需求符合度；意见使用 `blocking`、`question`、`nit`、`fyi`。只有 `blocking` 阻塞合并。
-- Review 通过且必需 CI 成功后才能合并；合并后确认主干检查并删除已合并的短生命周期分支。
+- Connect a PR to its Issue with `Closes #<issue>` or another appropriate linking phrase. Do not accidentally close an Issue for a staged design draft.
+- The PR body must explain the problem, key changes, risk and rationale, verification evidence, compatibility, data impact, deactivation or rollback method, and uncovered items. Apply the appropriate labels.
+- Before submitting a PR, complete a local diff self-review, then have the user or a suitable human reviewer review it. By default, do not publish a "self-review" comment on the PR. Publish a comment only when the user requests it or a review issue must be discussed publicly. AI self-review must not impersonate human approval, and you must not approve or merge your own PR.
+- Review must pin the base and head plus the source of requirements, then examine standards compliance and requirements compliance separately. Use `blocking`, `question`, `nit`, and `fyi` classifications. Only `blocking` findings prevent merge.
+- Merge only after Review approval and required CI success, performed by the user or someone with explicit authorization. After merge, confirm main-branch checks and clean up the merged short-lived branch according to the next section.
 
-## 6. 实现与测试要求
+### Post-Merge Branch Cleanup
 
-所有进入主干的插件代码均视为 **maintained**，默认使用 `code-implementation` 的 full 强度：
+Cleanup removes branch references, not PRs, Issues, or merge commits. After every merge, follow this order:
 
-1. 按验收标准列出小步实现计划、涉及模块和验证方式。
-2. 每个行为变化先写能区分正确与错误实现的失败测试，确认失败原因符合预期。
-3. 编写最小实现使测试通过，再重构并复测；保留红→绿证据。
-4. 修 bug 先复现和定位根因，再修复并添加回归测试；不一次试多种无关修法。
-5. 最后运行受影响测试、仓库规定的完整测试、lint、构建及安全检查，并核对每一条验收标准。
+1. Run `gh pr view <number> --json state,mergedAt,headRefName` and confirm `state=MERGED`, a non-null `mergedAt`, and the branch name. Always retain branches for open or closed-but-unmerged PRs. Never infer that a PR was merged merely because its branch was pushed, CI passed, or a local commit with the same name exists.
+2. Confirm the worktree is clean and the current branch is not the one to delete, then update the default branch:
 
-测试必须从产品契约和架构契约推导预期，不得调用被测实现来生成期望值。覆盖正常输入、空值、边界、异常、重复操作、权限失败和副作用；不能只测 happy path。
+   ```sh
+   git switch main
+   git pull --ff-only origin main
+   ```
 
-以 `package.json`、`composer.json`、`.wp-env.json` 和 CI 配置为准执行并记录真实命令、工作目录、退出码、测试数、失败、跳过和环境限制。本机没有原生 PHP 时使用仓库固定的 Docker Composer/PHP 入口；没有运行真实 WordPress 环境时，只能报告实际完成的静态或其他检查，不能宣称 WordPress 集成、安装或兼容性验证通过。
+3. Confirm that required checks on the merged default branch have started and eventually pass. If the default branch fails, report and fix it immediately. CI success before the PR merge does not establish default-branch health.
+4. Delete the remote and local short-lived branch for the merged PR:
 
-## 7. 安全与数据保护专项检查
+   ```sh
+   git push origin --delete <branch>
+   git branch -d <branch>
+   git fetch origin --prune
+   ```
 
-涉及 #4、#6、#7 或发布物时，至少验证：
+   Squash or rebase merges may prevent `git branch -d` from recognizing the branch as an ancestor. In that case, use `git branch -D` only on a branch used exclusively by that PR after confirming the PR was merged and equivalent changes are in `main`. If merge status or unique changes cannot be confirmed, retain the branch and report it.
+5. Recheck with `git branch -vv`, `git branch -r`, and the open PR list. A missing remote ref may be treated as successfully cleaned before continuing with other branches, but do not stop and leave other merged branches behind. Never delete the default branch or branches belonging to unmerged PRs.
 
-- `<script>`、事件属性、`javascript:`、危险 `data:` URL 和不允许的 HTML 不会进入可信输出。
-- 未授权 REST/AJAX 请求不能读取私有原文、修改文章或上传媒体。
-- 保存、自动保存和重复保存不会造成 Markdown 与 `post_content` 不一致。
-- 解析或保存失败不会写入半成品，也不会破坏旧的 Markdown 和 HTML。
-- 已有 Gutenberg 或经典 HTML 内容在转换前得到明确提示，可取消或恢复。
-- 工具栏保留选中文本；媒体插入不保存 blob URL；取消和上传失败不破坏源码。
-- 停用后标准 HTML 仍可读；卸载默认不删除文章内容和原文 meta。
-- 默认主题和至少一个非 2BLOG 第三方主题的前台展示，以及编辑器桌面和窄屏操作，均有真实验证记录。
+## 6. Implementation and Testing Requirements
 
-不得通过删除断言、放松安全预期、增加跳过或重试来换取绿色结果。测试只能使用虚构内容和专用测试环境，不使用真实站点凭据或生产文章。
+All plugin code that enters `main` is considered **maintained** and defaults to the full intensity of the `code-implementation` skill:
 
-## 8. Definition of Done 与交付汇报
+1. Derive a small-step implementation plan, affected modules, and verification methods from the acceptance criteria.
+2. For each behavior change, first write a failing test that distinguishes the correct implementation from an incorrect one. Confirm that the failure occurs for the expected reason.
+3. Write the minimum implementation required to pass, then refactor and retest. Preserve red-to-green evidence.
+4. For bug fixes, first reproduce and identify the root cause, then fix it and add a regression test. Do not try multiple unrelated fixes at once.
+5. Finally, run the affected tests, the repository's required full test suite, linting, builds, and security checks, then verify every acceptance criterion.
 
-只有同时满足以下条件，才可把对应 Issue 视为完成：
+Tests must derive expectations from product and architecture contracts. They must not call the implementation under test to generate expected values. Cover normal input, empty values, boundaries, errors, repeated operations, permission failures, and side effects. Do not test only the happy path.
 
-- 所有范围内验收标准有代码、文档或真实验证证据；未完成项明确保留。
-- 测试有效且最终改动后重新执行，必需检查无失败或意外跳过。
-- 安全、兼容性、数据保护和恢复要求已按风险验证。
-- 文档与架构决策同步；设计变化采用追加记录。
-- diff 无调试残留、无关文件、敏感信息或未审查依赖。
-- PR 关联正确，人工 Review 和必需 CI 已完成；本地通过不冒充远程通过。
-- 对 Release，还须完成 #8、真实干净 WordPress 环境安装验证、可追溯 ZIP、源 Commit、SHA-256、已知限制、升级和回滚说明。未完成前不得创建 `v0.1.0` 正式 Release。
+Use `package.json`, `composer.json`, `.wp-env.json`, and CI configuration as the source of truth for commands. Record actual commands, working directories, exit codes, test counts, failures, skips, and environment limitations. When native PHP is unavailable locally, use the repository's pinned Docker Composer and PHP entry points. Without a real WordPress environment, report only the static or other checks that actually ran; do not claim WordPress integration, installation, or compatibility verification.
 
-每次交付简洁报告：
+## 7. Security and Data Protection Checks
 
-1. 当前 Issue/阶段、实际改动文件及对应验收标准。
-2. 风险级别与依据。
-3. 红绿测试及最终验证的真实命令和结果；未运行项、环境限制和残余风险。
-4. 分支、Commit、PR、CI、Review、Release 的真实状态和链接；没有的明确写没有。
-5. 下一项最小可执行动作及是否仍需用户接受设计或授权远程操作。
+When work affects #4, #6, #7, or release artifacts, verify at least the following:
 
-不得用“应该能过”“已完成全流程”等无证据表述。发现阻塞时保留工作区与证据，说明具体阻塞和需要的最小输入，不擅自绕过门禁。
+- `<script>`, event-handler attributes, `javascript:`, dangerous `data:` URLs, and disallowed HTML cannot enter trusted output.
+- Unauthorized REST or AJAX requests cannot read private source, modify posts, or upload media.
+- Saving, autosaving, and repeated saves cannot create inconsistencies between Markdown and `post_content`.
+- Parsing or save failures cannot write partial output or damage previous Markdown and HTML.
+- Existing Gutenberg or classic HTML content receives an explicit warning before conversion and can be canceled or restored.
+- The toolbar preserves selected text. Media insertion does not persist blob URLs. Cancellation and upload failures do not damage source.
+- After deactivation, standard HTML remains readable. By default, uninstallation does not delete post content or source meta.
+- There is real verification evidence for display in the default theme and at least one non-2BLOG third-party theme, plus editor operation at desktop and narrow-screen sizes.
+
+Do not obtain green results by deleting assertions, weakening security expectations, or adding skips and retries. Tests may use fictional content and dedicated test environments only, never real site credentials or production posts.
+
+## 8. Definition of Done and Delivery Reporting
+
+An Issue may be considered complete only when all of the following conditions are met:
+
+- Every in-scope acceptance criterion has code, documentation, or real verification evidence. Unfinished items remain explicitly open.
+- Tests are valid and were rerun after the final change. Required checks have no failures or unexpected skips.
+- Security, compatibility, data protection, and recovery requirements have been verified according to their risk.
+- Documentation and architectural decisions are synchronized. Design changes use appended records.
+- The diff contains no debug residue, unrelated files, sensitive information, or unreviewed dependencies.
+- The PR is linked correctly, and human Review and required CI are complete. Local success does not impersonate remote success.
+- After the PR merge, default-branch health has been confirmed and the corresponding local and remote short-lived branches have been cleaned up. An unmerged PR is only a delivery candidate awaiting review; it does not mean the Issue is complete.
+- For a Release, #8 is also complete, installation has been verified in a real clean WordPress environment, and there is a traceable ZIP, source commit, SHA-256 digest, known-limitations section, upgrade procedure, and rollback procedure. Do not create a formal `v0.1.0` Release before these conditions are met.
+
+For each delivery, report concisely:
+
+1. The current Issue or phase, the files actually changed, and the acceptance criteria they satisfy.
+2. The risk level and rationale.
+3. The real commands and results for red/green tests and final verification, plus tests not run, environment limitations, and residual risks.
+4. The actual states and links for branch, commit, PR, CI, Review, and Release. Explicitly state when any of these do not exist.
+5. The next smallest executable action and whether user design acceptance or remote-operation authorization is still required.
+
+Do not use unsupported statements such as "it should pass" or "the full workflow is complete." When blocked, preserve the worktree and evidence, describe the concrete blocker and the minimum input required, and do not bypass gates.
