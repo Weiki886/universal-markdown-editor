@@ -14,7 +14,19 @@ $check = static function (bool $condition, string $message) use (&$failures, &$a
         $failures[] = $message;
     }
 };
-$adminId = get_current_user_id();
+$adminIds = get_users([
+    'role' => 'administrator',
+    'number' => 1,
+    'fields' => 'ID',
+]);
+
+if ($adminIds === []) {
+    fwrite(STDERR, "Could not find an administrator for the Markdown preview test.\n");
+    exit(1);
+}
+
+$adminId = (int) $adminIds[0];
+wp_set_current_user($adminId);
 $postId = wp_insert_post(
     [
         'post_type' => 'post',
