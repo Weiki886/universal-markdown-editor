@@ -26,7 +26,7 @@ if ($adminIds === []) {
 }
 
 wp_set_current_user((int) $adminIds[0]);
-$registeredMeta = get_registered_meta_keys('post');
+$registeredMeta = get_registered_meta_keys('post', 'post');
 foreach ([
     '_ume_markdown_source',
     '_ume_content_format',
@@ -73,7 +73,12 @@ $saveResponse = $request('PUT', $existingId, [
 ]);
 $saved = $saveResponse->get_data();
 $expectedHtml = "<h1>Saved</h1>\n<p>Original <strong>Markdown</strong>; literal *markers*.</p>\n";
-$check($saveResponse->get_status() === 200, 'An authorized post editor could not save Markdown.');
+$check(
+    $saveResponse->get_status() === 200,
+    'An authorized post editor could not save Markdown: HTTP '
+        . $saveResponse->get_status() . ' '
+        . wp_json_encode($saved)
+);
 $check(is_array($saved) && ($saved['managed'] ?? null) === true, 'A successful save did not mark the post as managed.');
 $check(is_array($saved) && ($saved['source'] ?? null) === $source, 'A successful save changed the Markdown source bytes.');
 $check(is_array($saved) && ($saved['html'] ?? null) === $expectedHtml, 'A successful save did not return sanitized server-rendered HTML.');
