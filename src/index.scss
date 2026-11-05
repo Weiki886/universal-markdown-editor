@@ -1,3 +1,161 @@
 .ume-admin {
     --ume-editor-surface: #ffffff;
 }
+
+.ume-sidebar-content {
+    padding: 16px;
+}
+
+.ume-workspace-modal {
+    .components-modal__content {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        padding: 0;
+    }
+
+    .components-modal__header {
+        flex: 0 0 auto;
+        padding: 12px 20px;
+    }
+}
+
+.ume-workspace {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    padding: 16px 20px 20px;
+}
+
+.ume-workspace-toolbar,
+.ume-prompt-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.ume-workspace-toolbar {
+    flex: 0 0 auto;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.ume-preview-status {
+    align-items: center;
+    display: inline-flex;
+    gap: 6px;
+    min-height: 32px;
+}
+
+.ume-preview-status .components-spinner {
+    margin: 0;
+}
+
+.ume-workspace .components-notice {
+    flex: 0 0 auto;
+    margin: 0 0 12px;
+}
+
+.ume-workspace-panels {
+    display: grid;
+    flex: 1 1 auto;
+    gap: 16px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    min-height: 0;
+}
+
+.ume-source-panel,
+.ume-preview-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+}
+
+.ume-source-panel label {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.ume-source-panel textarea {
+    background: #fff;
+    border: 1px solid #8c8f94;
+    border-radius: 2px;
+    box-sizing: border-box;
+    color: #1d2327;
+    flex: 1 1 auto;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 240px;
+    padding: 12px;
+    resize: none;
+    width: 100%;
+}
+
+.ume-source-panel textarea:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+    outline: 2px solid transparent;
+}
+
+.ume-preview-frame {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 2px;
+    flex: 1 1 auto;
+    min-height: 240px;
+    width: 100%;
+}
+
+.ume-mobile-tabs {
+    display: none;
+}
+
+.ume-import-prompt {
+    margin: 24px auto;
+    max-width: 720px;
+    padding: 0 20px;
+}
+
+.ume-import-prompt .components-notice {
+    margin-bottom: 20px;
+}
+
+@media (max-width: 782px) {
+    .ume-workspace {
+        padding: 12px;
+    }
+
+    .ume-workspace-toolbar {
+        align-items: flex-start;
+    }
+
+    .ume-mobile-tabs {
+        display: flex;
+        flex: 0 0 100%;
+        gap: 4px;
+    }
+
+    .ume-preview-status {
+        justify-content: flex-start;
+    }
+
+    .ume-workspace-panels {
+        display: block;
+    }
+
+    .ume-workspace-panels.is-editor .ume-preview-panel,
+    .ume-workspace-panels.is-preview .ume-source-panel {
+        display: none;
+    }
+
+    .ume-source-panel,
+    .ume-preview-panel {
+        height: 100%;
+    }
+}
