@@ -94,7 +94,7 @@ final class SaveService
             'converterVersion' => $version,
             'contentHash' => $actualContentHash,
             'sourceHash' => $actualSourceHash,
-            'modifiedGmt' => get_post_time('c', true, $post),
+            'modifiedGmt' => $post->post_modified_gmt,
             'revisionsEnabled' => wp_revisions_enabled($post),
         ];
     }
@@ -148,7 +148,7 @@ final class SaveService
         }
 
         $currentHash = hash('sha256', $post->post_content);
-        $currentModifiedGmt = get_post_time('c', true, $post);
+        $currentModifiedGmt = $post->post_modified_gmt;
         $state = $this->repository->getState($postId);
         $managed = ($state[MarkdownRepository::FORMAT] ?? null) === 'markdown';
         $hasMeta = $this->repository->hasAnyManagedMeta($state);
