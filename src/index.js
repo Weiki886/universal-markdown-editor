@@ -5,7 +5,7 @@ import './index.scss';
 import apiFetch from '@wordpress/api-fetch';
 import { Button, Modal, Notice, Spinner } from '@wordpress/components';
 import { useDispatch, useSelect } from '@wordpress/data';
-import { useEffect, useMemo, useState } from '@wordpress/element';
+import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
 import { PluginSidebar } from '@wordpress/edit-post';
 import { registerPlugin } from '@wordpress/plugins';
 import { __ } from '@wordpress/i18n';
@@ -32,38 +32,76 @@ function PreviewFrame( { html } ) {
 	);
 }
 
-function MarkdownWorkspace( {
-	postId,
-	initialContent,
-	initialPrompt,
-	onClose,
-} ) {
+function MarkdownWorkspace( { postId, initialContent, onClose } ) {
 	const [ source, setSource ] = useState( '' );
 	const [ baseline, setBaseline ] = useState( '' );
+	const [ session, setSession ] = useState( null );
+	const [ originalContent, setOriginalContent ] = useState( initialContent );
+	const [ loadError, setLoadError ] = useState( '' );
+	const [ saveError, setSaveError ] = useState( '' );
+	const [ saveErrorCode, setSaveErrorCode ] = useState( '' );
+	const [ isSaving, setIsSaving ] = useState( false );
 	const [ html, setHtml ] = useState( '' );
 	const [ previewState, setPreviewState ] = useState( 'idle' );
 	const [ previewError, setPreviewError ] = useState( '' );
 	const [ mobileView, setMobileView ] = useState( 'editor' );
-	const [ prompt, setPrompt ] = useState( initialPrompt );
+	const [ prompt, setPrompt ] = useState( '' );
 	const [ confirmClose, setConfirmClose ] = useState( false );
 	const previewRequest = useMemo( () => createPreviewRequest(), [] );
 	const editorDispatch = useDispatch( 'core/editor' );
-	const dirty = source !== baseline;
+	const dirty =
+		Boolean( session ) &&
+		prompt === '' &&
+		( ! session.managed || source !== baseline );
 
-	const beginEditing = ( content ) => {
+	const beginEditing = useCallback( ( content ) => {
 		setSource( content );
 		setBaseline( content );
 		setHtml( '' );
 		setPreviewError( '' );
 		setPreviewState( 'idle' );
 		setPrompt( '' );
-	};
+	}, [] );
 
 	useEffect( () => {
-		if ( prompt !== '' ) {
-			return undefined;
-		}
+		let active = true;
+		apiFetch( { path: `/ume/v1/posts/${ postId }/markdown` } )
+			.then( ( result ) => {
+				if ( ! active ) {
+					return;
+				}
+				setSession( result );
+				setOriginalContent( result.html || '' );
+				if ( result.managed ) {
+					beginEditing( result.source );
+					return;
+				}
+				if ( result.html.trim() === '' ) {
+					beginEditing( '' );
+					return;
+				}
+				setPrompt(
+					isComplexContent( result.html ) ? 'complex' : 'import'
+				);
+			} )
+			.catch( ( error ) => {
+				if ( active ) {
+					setLoadError(
+						error?.message ||
+							__(
+								'Could not load the Markdown session.',
+								'universal-markdown-editor'
+							)
+					);
+				}
+			} );
 
+		return () => {
+			active = false;
+		};
+	}, [ beginEditing, postId ] );
+
+	useEffect( () => {
 		if ( typeof editorDispatch.lockPostSaving === 'function' ) {
 			editorDispatch.lockPostSaving( LOCK_NAME );
 		}
@@ -79,7 +117,7 @@ function MarkdownWorkspace( {
 				editorDispatch.unlockPostSaving( LOCK_NAME );
 			}
 		};
-	}, [ editorDispatch, prompt ] );
+	}, [ editorDispatch ] );
 
 	useEffect( () => {
 		if ( prompt !== '' ) {
@@ -151,14 +189,90 @@ function MarkdownWorkspace( {
 		onClose();
 	};
 
-	const saveUnavailableNotice = (
+	const saveMarkdown = async () => {
+		if ( ! session || isSaving ) {
+			return;
+		}
+
+		setIsSaving( true );
+		setSaveError( '' );
+		setSaveErrorCode( '' );
+		try {
+			const saved = await apiFetch( {
+				path: `/ume/v1/posts/${ postId }/markdown`,
+				method: 'PUT',
+				data: {
+					source,
+					baseContentHash: session.contentHash,
+					baseModifiedGmt: session.modifiedGmt,
+					baseSourceHash: session.sourceHash,
+				},
+			} );
+			setSession( saved );
+			setBaseline( source );
+			setSaveError( '' );
+			window.setTimeout( () => window.location.reload(), 250 );
+		} catch ( error ) {
+			setSaveErrorCode( error?.code || '' );
+			setSaveError(
+				error?.message ||
+					__(
+						'Markdown could not be saved.',
+						'universal-markdown-editor'
+					)
+			);
+		} finally {
+			setIsSaving( false );
+		}
+	};
+
+	const downloadSource = () => {
+		const blob = new Blob( [ source ], {
+			type: 'text/markdown;charset=utf-8',
+		} );
+		const url = window.URL.createObjectURL( blob );
+		const link = window.document.createElement( 'a' );
+		link.href = url;
+		link.download = `post-${ postId }.md`;
+		link.click();
+		window.URL.revokeObjectURL( url );
+	};
+
+	const saveUnavailableNotice = ! session?.revisionsEnabled && (
 		<Notice status="warning" isDismissible={ false }>
 			{ __(
-				'Markdown changes are kept only for this editing session. Closing the workspace discards them; the original Gutenberg content remains unchanged.',
+				'WordPress revisions are disabled for this post type. Markdown can still be saved, but historical recovery is limited.',
 				'universal-markdown-editor'
 			) }
 		</Notice>
 	);
+
+	if ( loadError ) {
+		return (
+			<Modal
+				title={ __( 'Markdown editor', 'universal-markdown-editor' ) }
+				onRequestClose={ onClose }
+			>
+				<Notice status="error" isDismissible={ false }>
+					{ loadError }
+				</Notice>
+				<Button variant="secondary" onClick={ onClose }>
+					{ __( 'Close', 'universal-markdown-editor' ) }
+				</Button>
+			</Modal>
+		);
+	}
+
+	if ( ! session ) {
+		return (
+			<Modal
+				title={ __( 'Markdown editor', 'universal-markdown-editor' ) }
+				onRequestClose={ onClose }
+			>
+				<Spinner />
+			</Modal>
+		);
+	}
 
 	if ( prompt === 'complex' ) {
 		return (
@@ -226,7 +340,7 @@ function MarkdownWorkspace( {
 						</Button>
 						<Button
 							variant="primary"
-							onClick={ () => beginEditing( initialContent ) }
+							onClick={ () => beginEditing( originalContent ) }
 						>
 							{ __(
 								'Import current content',
@@ -298,8 +412,52 @@ function MarkdownWorkspace( {
 								'universal-markdown-editor'
 							) }
 						</Button>
+						<Button
+							variant="primary"
+							onClick={ saveMarkdown }
+							disabled={
+								isSaving ||
+								( session.managed && source === baseline )
+							}
+						>
+							{ isSaving
+								? __( 'Saving…', 'universal-markdown-editor' )
+								: __(
+										'Save Markdown',
+										'universal-markdown-editor'
+									) }
+						</Button>
 					</div>
 					{ saveUnavailableNotice }
+					{ saveError && (
+						<Notice status="error" isDismissible={ false }>
+							{ saveError }
+							{ saveErrorCode === 'ume_edit_conflict' && (
+								<div className="ume-prompt-actions">
+									<Button
+										variant="secondary"
+										onClick={ downloadSource }
+									>
+										{ __(
+											'Download Markdown',
+											'universal-markdown-editor'
+										) }
+									</Button>
+									<Button
+										variant="secondary"
+										onClick={ () =>
+											window.location.reload()
+										}
+									>
+										{ __(
+											'Reload post',
+											'universal-markdown-editor'
+										) }
+									</Button>
+								</div>
+							) }
+						</Notice>
+					) }
 					{ previewError && (
 						<Notice status="error" isDismissible={ false }>
 							{ previewError }
@@ -429,17 +587,6 @@ function MarkdownEditorPlugin() {
 		setIsOpen( true );
 	};
 
-	let initialPrompt = '';
-	if (
-		isOpen &&
-		editorState.status !== 'auto-draft' &&
-		editorState.content.trim() !== ''
-	) {
-		initialPrompt = isComplexContent( editorState.content )
-			? 'complex'
-			: 'import';
-	}
-
 	return (
 		<>
 			<PluginSidebar
@@ -465,7 +612,6 @@ function MarkdownEditorPlugin() {
 					key={ editorState.postId }
 					postId={ Number( editorState.postId ) }
 					initialContent={ editorState.content }
-					initialPrompt={ initialPrompt }
 					onClose={ () => setIsOpen( false ) }
 				/>
 			) }

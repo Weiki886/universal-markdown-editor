@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Gutenberg Markdown workspace persistence with private source metadata,
+  server-generated standard HTML, per-post REST permissions, conflict checks,
+  revision snapshots, and failed-write compensation.
 - WordPress plugin entry point, namespaced autoloader, lifecycle hooks, and
   compatibility checks.
 - Gutenberg admin asset entry and post-editor-only asset gating.

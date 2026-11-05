@@ -205,11 +205,12 @@ saved_source_hash == hash("sha256", markdown_source)
 {
   "source": "# Title",
   "baseContentHash": "previous hash",
+  "baseSourceHash": "previous source hash or null for an unmanaged post",
   "baseModifiedGmt": "previous modified time"
 }
 ```
 
-服务端重新加载文章，校验基线，转换并过滤源码，然后保存 source、HTML、格式和 hash。响应与读取接口相同，以服务端结果为唯一成功状态。
+服务端重新加载文章，校验基线（受管文章同时比对 source hash，以避免不同 Markdown 源码渲染为相同 HTML 时静默覆盖），转换并过滤源码，然后保存 source、HTML、格式和 hash。响应与读取接口相同，以服务端结果为唯一成功状态。
 
 错误契约：
 
@@ -342,7 +343,7 @@ Gutenberg auto-draft 已有 post ID 且当前用户可编辑时，创建本地�
 1. 重新读取 post 和 meta，验证权限、post type、版本、基线 hash/modified。
 2. 完整执行转换和过滤；失败时不开始数据库写入。
 3. 读取旧 post_content 和全部插件 meta 作为恢复快照，按 WordPress API 创建保存前 revision（可用时）。
-4. 更新文章和 meta，随后重新读取并验证全部不变量。
+4. 使用原子唯一 option 锁按文章串行化保存（60 秒租期，异常退出后自动过期），在锁内重新读取基线；显式保存旧版本与新版本 revision，临时抑制 WordPress 对同一次文章更新的自动 revision hook，避免创建“新 HTML + 旧 Markdown meta”的不一致 revision；更新文章和 meta，随后重新读取并验证全部不变量。
 5. 任一步骤失败时，使用快照执行补偿恢复并再次读取验证；返回 `ume_save_failed`，UI 保留本地源码。
 6. 补偿也无法恢复时返回明确严重错误，记录 post ID 和失败阶段，提示用户不要继续覆盖并使用 revision/快照恢复；不得仍返回成功。
 

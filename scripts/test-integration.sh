@@ -65,6 +65,17 @@ fi
 
 printf '%s\n' "$markdown_preview_output"
 
+if ! markdown_storage_output=$(
+    "$WP_ENV" run cli wp eval-file \
+        "wp-content/plugins/$PLUGIN_SLUG/tests/integration/markdown-storage.php" 2>&1
+); then
+    printf '%s\n' "$markdown_storage_output"
+    echo "The Markdown storage integration test failed." >&2
+    exit 1
+fi
+
+printf '%s\n' "$markdown_storage_output"
+
 if printf '%s\n' "$markdown_preview_output" | grep -Eq '(Warning|Fatal error|Parse error):'; then
     echo "The Markdown preview integration test emitted a PHP error." >&2
     exit 1
@@ -72,5 +83,10 @@ fi
 
 if printf '%s\n' "$markdown_core_output" | grep -Eq '(Warning|Fatal error|Parse error):'; then
     echo "The Markdown core integration test emitted a PHP error." >&2
+    exit 1
+fi
+
+if printf '%s\n' "$markdown_storage_output" | grep -Eq '(Warning|Fatal error|Parse error):'; then
+    echo "The Markdown storage integration test emitted a PHP error." >&2
     exit 1
 fi
