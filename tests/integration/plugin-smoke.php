@@ -98,14 +98,44 @@ $check(
 );
 
 $GLOBALS['current_screen'] = WP_Screen::get('post');
+$adminIds = get_users([
+    'role' => 'administrator',
+    'number' => 1,
+    'fields' => 'ID',
+]);
+$adminId = $adminIds === [] ? 0 : (int) $adminIds[0];
+wp_set_current_user($adminId);
 \UniversalMarkdownEditor\Admin\Assets::enqueue('post.php');
 
 $check(wp_script_is('ume-admin', 'enqueued'), 'The editor script was not enqueued on the post editor.');
 $check(wp_style_is('ume-admin', 'enqueued'), 'The editor style was not enqueued on the post editor.');
 $check(wp_script_is('ume-admin', 'registered'), 'The editor script was not registered.');
+$check(wp_script_is('media-editor', 'enqueued'), 'The authorized post editor did not enqueue the WordPress media library.');
+$localizedSettings = wp_scripts()->get_data('ume-admin', 'data');
+$check(
+    is_string($localizedSettings)
+        && str_contains($localizedSettings, '"canUploadMedia":true'),
+    'The editor did not receive the current media upload capability.'
+);
 
 wp_dequeue_script('ume-admin');
 wp_dequeue_style('ume-admin');
+wp_dequeue_script('media-editor');
+wp_set_current_user(0);
+\UniversalMarkdownEditor\Admin\Assets::enqueue('post.php');
+$unauthorizedSettings = wp_scripts()->get_data('ume-admin', 'data');
+$check(
+    !wp_script_is('media-editor', 'enqueued'),
+    'A user without upload_files caused the WordPress media library to be enqueued.'
+);
+$check(
+    is_string($unauthorizedSettings)
+        && str_contains($unauthorizedSettings, '"canUploadMedia":false'),
+    'A user without upload_files received media insertion capability.'
+);
+wp_dequeue_script('ume-admin');
+wp_dequeue_style('ume-admin');
+wp_set_current_user($adminId);
 
 $nonEditorScreens = [
     'post list' => ['edit.php', WP_Screen::get('edit-post')],

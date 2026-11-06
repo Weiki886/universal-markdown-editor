@@ -1,12 +1,13 @@
 # Universal Markdown Editor for WordPress
 
 A universal, theme-independent Markdown workspace for WordPress posts. The
-planned editor keeps the Markdown source private while storing safe, standard
+editor keeps the Markdown source private while storing safe, standard
 HTML in `post_content`, so the front end and native WordPress workflows remain
 usable.
 
 > **Project status:** the Gutenberg Markdown workspace, server-rendered preview,
-> and dual Markdown/HTML storage are under active development. The plugin is
+> dual Markdown/HTML storage, formatting toolbar, and WordPress media insertion
+> are under active development. The plugin is
 > not yet ready for production use; follow the linked Issues and CI status.
 
 ## Quick Start
@@ -32,7 +33,7 @@ The local site is available at <http://localhost:8888/wp-admin> with the
 suite, and dependency license audit. `npm run test:integration` starts the
 pinned WordPress environment and verifies plugin activation, editor asset
 gating, server-side preview, private Markdown storage, permissions, revisions,
-conflict handling, and failed-save recovery.
+conflict handling, failed-save recovery, and media capability wiring.
 
 ## Development environment
 

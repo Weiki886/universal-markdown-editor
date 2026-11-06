@@ -3,14 +3,33 @@ import './index.scss';
 // Gutenberg provides these modules as WordPress runtime externals.
 /* eslint-disable import/no-unresolved, import/no-extraneous-dependencies */
 import apiFetch from '@wordpress/api-fetch';
-import { Button, Modal, Notice, Spinner } from '@wordpress/components';
+import {
+	Button,
+	Modal,
+	Notice,
+	Spinner,
+	TextControl,
+} from '@wordpress/components';
 import { useDispatch, useSelect } from '@wordpress/data';
-import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
+import {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from '@wordpress/element';
 import { PluginSidebar } from '@wordpress/edit-post';
 import { registerPlugin } from '@wordpress/plugins';
 import { __ } from '@wordpress/i18n';
 /* eslint-enable import/no-unresolved, import/no-extraneous-dependencies */
 import { createPreviewRequest } from './Editor/preview-request';
+import {
+	applyMarkdownAction,
+	buildMarkdownImage,
+	buildMarkdownLink,
+	isSafeImageUrl,
+	isSafeLinkUrl,
+} from './Editor/markdown-toolbar';
 import { isComplexContent } from './Editor/source-classification';
 
 apiFetch.use( apiFetch.createRootURLMiddleware( window.umeSettings.root ) );
@@ -18,6 +37,30 @@ apiFetch.use( apiFetch.createNonceMiddleware( window.umeSettings.nonce ) );
 
 const PREVIEW_DEBOUNCE_MS = 400;
 const LOCK_NAME = 'ume-markdown-workspace';
+const TOOLBAR_ACTIONS = [
+	{ action: 'bold', label: __( 'Bold', 'universal-markdown-editor' ) },
+	{ action: 'italic', label: __( 'Italic', 'universal-markdown-editor' ) },
+	{
+		action: 'strikethrough',
+		label: __( 'Strikethrough', 'universal-markdown-editor' ),
+	},
+	{ action: 'heading', label: __( 'Heading', 'universal-markdown-editor' ) },
+	{
+		action: 'unorderedList',
+		label: __( 'Bulleted list', 'universal-markdown-editor' ),
+	},
+	{
+		action: 'orderedList',
+		label: __( 'Numbered list', 'universal-markdown-editor' ),
+	},
+	{ action: 'quote', label: __( 'Blockquote', 'universal-markdown-editor' ) },
+	{ action: 'code', label: __( 'Inline code', 'universal-markdown-editor' ) },
+	{
+		action: 'codeBlock',
+		label: __( 'Code block', 'universal-markdown-editor' ),
+	},
+	{ action: 'table', label: __( 'Table', 'universal-markdown-editor' ) },
+];
 
 function PreviewFrame( { html } ) {
 	const document = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font:16px/1.65 system-ui,sans-serif;color:#202124;margin:20px;overflow-wrap:anywhere}img{max-width:100%;height:auto}pre{overflow:auto;padding:12px;background:#f3f4f5}table{border-collapse:collapse}th,td{border:1px solid #d0d4d8;padding:6px 10px;text-align:left}blockquote{border-left:3px solid #9aa0a6;margin-left:0;padding-left:14px;color:#5f6368}</style></head><body>${ html }</body></html>`;
@@ -47,6 +90,13 @@ function MarkdownWorkspace( { postId, initialContent, onClose } ) {
 	const [ mobileView, setMobileView ] = useState( 'editor' );
 	const [ prompt, setPrompt ] = useState( '' );
 	const [ confirmClose, setConfirmClose ] = useState( false );
+	const [ linkDialog, setLinkDialog ] = useState( false );
+	const [ linkText, setLinkText ] = useState( '' );
+	const [ linkUrl, setLinkUrl ] = useState( '' );
+	const [ linkError, setLinkError ] = useState( '' );
+	const [ mediaError, setMediaError ] = useState( '' );
+	const [ selection, setSelection ] = useState( { start: 0, end: 0 } );
+	const textareaRef = useRef( null );
 	const previewRequest = useMemo( () => createPreviewRequest(), [] );
 	const editorDispatch = useDispatch( 'core/editor' );
 	const dirty =
@@ -187,6 +237,167 @@ function MarkdownWorkspace( { postId, initialContent, onClose } ) {
 			return;
 		}
 		onClose();
+	};
+
+	const replaceSelection = (
+		replacement,
+		selectedStart,
+		selectedEnd,
+		selectionStart,
+		selectionEnd
+	) => {
+		const input = textareaRef.current;
+		const start =
+			selectionStart ??
+			( input ? input.selectionStart : selection.start );
+		const end =
+			selectionEnd ?? ( input ? input.selectionEnd : selection.end );
+		const nextSource =
+			source.slice( 0, start ) + replacement + source.slice( end );
+		setSource( nextSource );
+		const caretStart = selectedStart ?? start + replacement.length;
+		const caretEnd = selectedEnd ?? caretStart;
+		window.requestAnimationFrame( () => {
+			if ( textareaRef.current ) {
+				textareaRef.current.focus();
+				textareaRef.current.setSelectionRange( caretStart, caretEnd );
+				setSelection( { start: caretStart, end: caretEnd } );
+			}
+		} );
+	};
+
+	const runToolbarAction = ( action ) => {
+		const input = textareaRef.current;
+		const start = input ? input.selectionStart : selection.start;
+		const end = input ? input.selectionEnd : selection.end;
+		const result = applyMarkdownAction( source, start, end, action );
+		setSource( result.source );
+		window.requestAnimationFrame( () => {
+			if ( textareaRef.current ) {
+				textareaRef.current.focus();
+				textareaRef.current.setSelectionRange(
+					result.selectionStart,
+					result.selectionEnd
+				);
+				setSelection( {
+					start: result.selectionStart,
+					end: result.selectionEnd,
+				} );
+			}
+		} );
+	};
+
+	const openLinkDialog = () => {
+		const input = textareaRef.current;
+		const start = input ? input.selectionStart : selection.start;
+		const end = input ? input.selectionEnd : selection.end;
+		setSelection( { start, end } );
+		setLinkText( source.slice( start, end ) );
+		setLinkUrl( '' );
+		setLinkError( '' );
+		setLinkDialog( true );
+	};
+
+	const insertLink = () => {
+		if ( ! isSafeLinkUrl( linkUrl ) ) {
+			setLinkError(
+				__(
+					'Enter a safe HTTP, HTTPS, mail, telephone, or relative URL.',
+					'universal-markdown-editor'
+				)
+			);
+			return;
+		}
+		const markdown = buildMarkdownLink( linkText || 'link text', linkUrl );
+		const labelStart = 1;
+		replaceSelection(
+			markdown,
+			selection.start + labelStart,
+			selection.start + labelStart + ( linkText || 'link text' ).length,
+			selection.start,
+			selection.end
+		);
+		setLinkDialog( false );
+	};
+
+	const openMediaLibrary = () => {
+		setMediaError( '' );
+		if ( ! window.umeSettings.canUploadMedia ) {
+			setMediaError(
+				__(
+					'Your account does not have permission to upload or select media.',
+					'universal-markdown-editor'
+				)
+			);
+			return;
+		}
+		if ( ! window.wp?.media ) {
+			setMediaError(
+				__(
+					'The WordPress media library is unavailable. Reload the editor and try again.',
+					'universal-markdown-editor'
+				)
+			);
+			return;
+		}
+
+		try {
+			const frame = window.wp.media( {
+				title: __(
+					'Select or upload an image',
+					'universal-markdown-editor'
+				),
+				button: {
+					text: __( 'Insert image', 'universal-markdown-editor' ),
+				},
+				library: { type: 'image' },
+				multiple: false,
+			} );
+			frame.on( 'select', () => {
+				const attachment = frame
+					.state()
+					.get( 'selection' )
+					.first()
+					?.toJSON();
+				if (
+					! attachment ||
+					! isSafeImageUrl( attachment.url || '' )
+				) {
+					setMediaError(
+						__(
+							'The selected media did not provide a safe, permanent image URL.',
+							'universal-markdown-editor'
+						)
+					);
+					return;
+				}
+				const markdown = buildMarkdownImage(
+					attachment.alt || attachment.title || '',
+					attachment.url
+				);
+				const altText = attachment.alt || attachment.title || '';
+				const input = textareaRef.current;
+				const start = input ? input.selectionStart : selection.start;
+				const end = input ? input.selectionEnd : selection.end;
+				setSelection( { start, end } );
+				replaceSelection(
+					markdown,
+					start + 2,
+					start + 2 + altText.length,
+					start,
+					end
+				);
+			} );
+			frame.open();
+		} catch ( error ) {
+			setMediaError(
+				error?.message ||
+					__(
+						'The media library could not be opened.',
+						'universal-markdown-editor'
+					)
+			);
+		}
 	};
 
 	const saveMarkdown = async () => {
@@ -362,6 +573,91 @@ function MarkdownWorkspace( { postId, initialContent, onClose } ) {
 				className="ume-workspace-modal"
 			>
 				<div className="ume-workspace">
+					<div
+						className="ume-format-toolbar"
+						role="toolbar"
+						aria-label={ __(
+							'Markdown formatting',
+							'universal-markdown-editor'
+						) }
+					>
+						{ TOOLBAR_ACTIONS.map( ( { action, label } ) => (
+							<Button
+								key={ action }
+								variant="tertiary"
+								title={ label }
+								aria-label={ label }
+								disabled={ prompt !== '' || isSaving }
+								onMouseDown={ ( event ) =>
+									event.preventDefault()
+								}
+								onClick={ () => runToolbarAction( action ) }
+							>
+								{ label }
+							</Button>
+						) ) }
+						<Button
+							variant="tertiary"
+							title={ __(
+								'Insert link',
+								'universal-markdown-editor'
+							) }
+							aria-label={ __(
+								'Insert link',
+								'universal-markdown-editor'
+							) }
+							disabled={ prompt !== '' || isSaving }
+							onMouseDown={ ( event ) => event.preventDefault() }
+							onClick={ openLinkDialog }
+						>
+							{ __( 'Link', 'universal-markdown-editor' ) }
+						</Button>
+						<Button
+							variant="tertiary"
+							title={ __(
+								'Insert image',
+								'universal-markdown-editor'
+							) }
+							aria-label={ __(
+								'Insert image',
+								'universal-markdown-editor'
+							) }
+							aria-describedby={
+								! window.umeSettings.canUploadMedia
+									? 'ume-media-permission-note'
+									: undefined
+							}
+							disabled={
+								prompt !== '' ||
+								isSaving ||
+								! window.umeSettings.canUploadMedia
+							}
+							onMouseDown={ ( event ) => event.preventDefault() }
+							onClick={ openMediaLibrary }
+						>
+							{ __( 'Image', 'universal-markdown-editor' ) }
+						</Button>
+						{ ! window.umeSettings.canUploadMedia && (
+							<span
+								id="ume-media-permission-note"
+								className="ume-toolbar-help"
+							>
+								{ __(
+									'Media access requires the WordPress upload_files capability.',
+									'universal-markdown-editor'
+								) }
+							</span>
+						) }
+					</div>
+					{ mediaError && (
+						<Notice
+							status="error"
+							isDismissible
+							onRemove={ () => setMediaError( '' ) }
+						>
+							{ mediaError }
+						</Notice>
+					) }
 					<div className="ume-workspace-toolbar">
 						<div
 							className="ume-mobile-tabs"
@@ -481,10 +777,15 @@ function MarkdownWorkspace( { postId, initialContent, onClose } ) {
 							</label>
 							<textarea
 								id="ume-markdown-source"
+								ref={ textareaRef }
 								value={ source }
-								onChange={ ( event ) =>
-									setSource( event.target.value )
-								}
+								onChange={ ( event ) => {
+									setSource( event.target.value );
+									setSelection( {
+										start: event.target.selectionStart,
+										end: event.target.selectionEnd,
+									} );
+								} }
 								spellCheck="false"
 								autoCapitalize="off"
 								autoComplete="off"
@@ -506,6 +807,47 @@ function MarkdownWorkspace( { postId, initialContent, onClose } ) {
 					</div>
 				</div>
 			</Modal>
+			{ linkDialog && (
+				<Modal
+					title={ __( 'Insert link', 'universal-markdown-editor' ) }
+					onRequestClose={ () => setLinkDialog( false ) }
+				>
+					<TextControl
+						label={ __( 'Text', 'universal-markdown-editor' ) }
+						value={ linkText }
+						onChange={ setLinkText }
+						autoComplete="off"
+					/>
+					<TextControl
+						label={ __( 'URL', 'universal-markdown-editor' ) }
+						value={ linkUrl }
+						onChange={ ( value ) => {
+							setLinkUrl( value );
+							setLinkError( '' );
+						} }
+						autoComplete="url"
+						autoCapitalize="off"
+						spellCheck={ false }
+						type="text"
+					/>
+					{ linkError && (
+						<Notice status="error" isDismissible={ false }>
+							{ linkError }
+						</Notice>
+					) }
+					<div className="ume-prompt-actions">
+						<Button
+							variant="secondary"
+							onClick={ () => setLinkDialog( false ) }
+						>
+							{ __( 'Cancel', 'universal-markdown-editor' ) }
+						</Button>
+						<Button variant="primary" onClick={ insertLink }>
+							{ __( 'Insert link', 'universal-markdown-editor' ) }
+						</Button>
+					</div>
+				</Modal>
+			) }
 			{ confirmClose && (
 				<Modal
 					title={ __(

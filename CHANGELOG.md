@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Markdown formatting toolbar with selection-aware formatting, safe link entry,
+  and permission-gated WordPress media library insertion.
 - Gutenberg Markdown workspace persistence with private source metadata,
   server-generated standard HTML, per-post REST permissions, conflict checks,
   revision snapshots, and failed-write compensation.
