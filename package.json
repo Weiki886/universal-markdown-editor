@@ -15,13 +15,16 @@
     "check:js": "wp-scripts lint-js src",
     "check:licenses": "node scripts/check-licenses.mjs",
     "check:licenses:self-test": "node scripts/check-licenses.mjs --self-test",
+    "check:dependencies": "npm audit --omit=dev --audit-level=high && ./bin/composer audit --locked --no-dev",
+    "check:secrets": "sh scripts/check-secrets.sh",
     "check:php-syntax": "sh scripts/check-php-syntax.sh",
     "env:destroy": "wp-env destroy",
     "env:start": "wp-env start",
     "env:stop": "wp-env stop",
     "test:integration": "sh scripts/test-integration.sh",
     "test:js": "node --test tests/js/*.test.cjs",
-    "test:php": "sh scripts/test-php.sh"
+    "test:php": "sh scripts/test-php.sh",
+    "package:artifact": "node scripts/package-artifact.mjs"
   },
   "devDependencies": {
     "@wordpress/env": "12.1.0",
