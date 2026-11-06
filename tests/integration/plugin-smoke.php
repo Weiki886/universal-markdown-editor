@@ -114,7 +114,7 @@ $check(
 );
 $check(
     is_string($unauthorizedSettings)
-        && preg_match('/canUploadMedia["\']?\s*:\s*false/', $unauthorizedSettings) === 1,
+        && preg_match('/"canUploadMedia":""/', $unauthorizedSettings) === 1,
     'A user without upload_files received media insertion capability: '
         . (string) $unauthorizedSettings
 );
@@ -131,7 +131,7 @@ $check(wp_script_is('media-editor', 'enqueued'), 'The authorized post editor did
 $localizedSettings = wp_scripts()->get_data('ume-admin', 'data');
 $check(
     is_string($localizedSettings)
-        && preg_match('/canUploadMedia["\']?\s*:\s*true/', $localizedSettings) === 1,
+        && preg_match('/"canUploadMedia":"1"/', $localizedSettings) === 1,
     'The editor did not receive the current media upload capability: '
         . (string) $localizedSettings
 );
