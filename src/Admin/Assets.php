@@ -22,6 +22,11 @@ final class Assets
             return;
         }
 
+        $canUploadMedia = current_user_can('upload_files');
+        if ($canUploadMedia) {
+            wp_enqueue_media();
+        }
+
         $asset = require $assetFile;
         $baseUrl = plugin_dir_url(UME_FILE) . 'build/';
 
@@ -46,6 +51,7 @@ final class Assets
             [
                 'root' => esc_url_raw(rest_url()),
                 'nonce' => wp_create_nonce('wp_rest'),
+                'canUploadMedia' => $canUploadMedia,
             ]
         );
     }

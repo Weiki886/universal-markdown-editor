@@ -266,6 +266,7 @@ clean -> closed
 - 关闭 dirty 会话、刷新页面或离开页面前提示；保存按钮重复点击只产生一个请求。
 - conflict 不提供自动覆盖按钮。用户可复制/下载本地 Markdown，或明确重新加载服务端版本。
 - 工具栏只操作 source 和 selection；选区替换后恢复合理焦点与选区，支持中文、空选区、撤销/重做和键盘操作。
+- 链接输入只接受 HTTP(S)、mailto、tel 和相对 URL；媒体按钮仅在当前用户具备 `upload_files` 时可用，并复用 WordPress 媒体库。插入前必须确认附件提供绝对 HTTP(S) URL，取消或上传失败不得修改 source。
 
 ### 6.3 预览安全与布局
 

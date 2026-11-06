@@ -29,12 +29,34 @@
 }
 
 .ume-workspace-toolbar,
-.ume-prompt-actions {
+.ume-prompt-actions,
+.ume-format-toolbar {
     align-items: center;
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
     justify-content: flex-end;
+}
+
+.ume-format-toolbar {
+    flex: 0 0 auto;
+    justify-content: flex-start;
+    margin-bottom: 8px;
+    max-width: 100%;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.ume-format-toolbar .components-button {
+    flex: 0 0 auto;
+    min-height: 36px;
+}
+
+.ume-toolbar-help {
+    align-self: center;
+    color: #50575e;
+    flex: 0 0 auto;
+    font-size: 12px;
 }
 
 .ume-workspace-toolbar {
@@ -133,6 +155,11 @@
 
     .ume-workspace-toolbar {
         align-items: flex-start;
+    }
+
+    .ume-format-toolbar {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
     }
 
     .ume-mobile-tabs {
