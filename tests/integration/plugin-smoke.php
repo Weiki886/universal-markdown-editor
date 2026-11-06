@@ -104,6 +104,23 @@ $adminIds = get_users([
     'fields' => 'ID',
 ]);
 $adminId = $adminIds === [] ? 0 : (int) $adminIds[0];
+wp_set_current_user(0);
+\UniversalMarkdownEditor\Admin\Assets::enqueue('post.php');
+$unauthorizedSettings = wp_scripts()->get_data('ume-admin', 'data');
+$check(
+    !wp_script_is('media-editor', 'enqueued'),
+    'A user without upload_files caused the WordPress media library to be enqueued: '
+        . implode(', ', wp_scripts()->queue)
+);
+$check(
+    is_string($unauthorizedSettings)
+        && preg_match('/canUploadMedia["\']?\s*:\s*false/', $unauthorizedSettings) === 1,
+    'A user without upload_files received media insertion capability: '
+        . (string) $unauthorizedSettings
+);
+wp_dequeue_script('ume-admin');
+wp_dequeue_style('ume-admin');
+
 wp_set_current_user($adminId);
 \UniversalMarkdownEditor\Admin\Assets::enqueue('post.php');
 
@@ -114,25 +131,11 @@ $check(wp_script_is('media-editor', 'enqueued'), 'The authorized post editor did
 $localizedSettings = wp_scripts()->get_data('ume-admin', 'data');
 $check(
     is_string($localizedSettings)
-        && str_contains($localizedSettings, '"canUploadMedia":true'),
-    'The editor did not receive the current media upload capability.'
+        && preg_match('/canUploadMedia["\']?\s*:\s*true/', $localizedSettings) === 1,
+    'The editor did not receive the current media upload capability: '
+        . (string) $localizedSettings
 );
 
-wp_dequeue_script('ume-admin');
-wp_dequeue_style('ume-admin');
-wp_dequeue_script('media-editor');
-wp_set_current_user(0);
-\UniversalMarkdownEditor\Admin\Assets::enqueue('post.php');
-$unauthorizedSettings = wp_scripts()->get_data('ume-admin', 'data');
-$check(
-    !wp_script_is('media-editor', 'enqueued'),
-    'A user without upload_files caused the WordPress media library to be enqueued.'
-);
-$check(
-    is_string($unauthorizedSettings)
-        && str_contains($unauthorizedSettings, '"canUploadMedia":false'),
-    'A user without upload_files received media insertion capability.'
-);
 wp_dequeue_script('ume-admin');
 wp_dequeue_style('ume-admin');
 wp_set_current_user($adminId);
