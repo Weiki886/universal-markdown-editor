@@ -59,6 +59,56 @@ Useful commands:
 scopes their namespaces with the `UME_Vendor` prefix, regenerates the autoloader,
 and verifies the isolated runtime on PHP 8.1.
 
+## Install a Development Build
+
+This project has not published an official release. For evaluation only, a
+successful GitHub Actions run provides a short-lived development artifact:
+
+1. Open the successful `Verify plugin` run for the branch or pull request.
+2. Download `universal-markdown-editor-development-build` and extract it.
+3. Verify the `.zip.sha256` file with `sha256sum -c <archive>.sha256` on Linux,
+   or `shasum -a 256 -c <archive>.sha256` on macOS.
+4. Confirm the `.zip.source` file matches the commit you intend to test.
+5. In a staging WordPress site, open **Plugins → Add New Plugin → Upload
+   Plugin**, select the ZIP, install it, and activate it.
+
+The ZIP includes `BUILD-INFO.txt` with its plugin version and full source commit.
+Do not use this development artifact on a production site. A green static check
+does not replace WordPress integration, theme, browser, or upgrade verification.
+
+## Editing and Existing Posts
+
+The plugin adds a Markdown workspace to the Gutenberg post editor; it does not
+replace the editor for every post type and does not support the Classic Editor.
+Use the Markdown editor for posts, review the server-rendered preview, then save.
+The front end continues to use standard HTML stored in `post_content`.
+
+Opening an unmanaged post does not change it. For plain text content, the editor
+asks whether to import the current text as Markdown, start empty, or cancel. For
+content containing blocks, HTML, or shortcodes that cannot be converted
+losslessly, it warns that the original will remain unchanged and offers cancel
+or starting with empty Markdown. Save only after reviewing the source and
+preview. Back up the site before first enabling the plugin on existing content.
+
+## Upgrade, Deactivation, and Recovery
+
+- Before replacing a development build, export or back up the database and keep
+  the `.zip.source` record for the build being tested.
+- WordPress revisions are used to preserve the pre-save and saved post state
+  when revisions are enabled. If revisions are disabled, the editor displays a
+  warning that historical recovery is limited.
+- Deactivation does not remove generated HTML from `post_content`; themes keep
+  rendering that standard content. The plugin's Markdown source remains in
+  post metadata.
+- Uninstallation does not delete post content or Markdown metadata by default.
+- To roll back code, deactivate and replace the plugin with the previous
+  verified ZIP. If content needs recovery, use the post's WordPress Revisions
+  screen or restore a known-good database backup. Test database restoration
+  before relying on it; the plugin does not automate backup restoration.
+
+See [SECURITY.md](SECURITY.md) for vulnerability reporting and [Testing](docs/testing.md)
+for verification scope and known gaps.
+
 ## Safety and data boundaries
 
 The editor reads Markdown sessions only for users who can edit the requested

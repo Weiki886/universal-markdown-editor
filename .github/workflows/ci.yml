@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -34,6 +36,9 @@ jobs:
       - name: Run JavaScript lint
         run: npm run check:js
 
+      - name: Run JavaScript tests
+        run: npm run test:js
+
       - name: Build admin assets
         run: npm run build
 
@@ -45,16 +50,39 @@ jobs:
           npm run check:licenses:self-test
           npm run check:licenses
 
+      - name: Audit dependency vulnerabilities
+        run: npm run check:dependencies
+
+      - name: Set up Go for pinned Gitleaks CLI
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00
+        with:
+          go-version: '1.24.11'
+
+      - name: Install pinned Gitleaks CLI
+        run: go install github.com/zricethezav/gitleaks/v8@v8.30.1
+
+      - name: Scan repository files for credentials
+        run: npm run check:secrets
+
       - name: Build release artifact
         run: npm run build:release
+
+      - name: Package traceable development ZIP
+        env:
+          UME_SOURCE_SHA: ${{ github.sha }}
+        run: |
+          npm run package:artifact
+          cd dist/artifacts
+          sha256sum -c *.sha256
+          test "$(cat *.zip.source)" = "$UME_SOURCE_SHA"
 
       - name: Run WordPress integration smoke test
         run: npm run test:integration
 
-      - name: Upload release artifact
+      - name: Upload development ZIP artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: universal-markdown-editor
-          path: dist/universal-markdown-editor
+          name: universal-markdown-editor-development-build
+          path: dist/artifacts/*
           if-no-files-found: error
           retention-days: 7
