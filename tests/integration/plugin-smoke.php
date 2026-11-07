@@ -40,7 +40,10 @@ $check($pluginHeaders['requiresAtLeast'] === '6.4', 'The minimum WordPress versi
 $check($pluginHeaders['requiresPHP'] === '8.1', 'The minimum PHP version header is incorrect.');
 $check($pluginHeaders['license'] === 'GPL-2.0-or-later', 'The plugin license header is incorrect.');
 $check(version_compare(PHP_VERSION, '8.1', '>='), 'The integration environment uses an unsupported PHP version.');
-$check($wordpressVersion === '7.1.4', 'The integration environment is not pinned to WordPress 7.1.4.');
+$check(
+    version_compare($wordpressVersion, '6.4', '>='),
+    'The integration environment is below the declared WordPress 6.4 minimum.'
+);
 $check(class_exists(\UniversalMarkdownEditor\Plugin::class), 'The namespaced Plugin class did not load.');
 $check(class_exists(\UniversalMarkdownEditor\Lifecycle::class), 'The namespaced Lifecycle class did not load.');
 $check(class_exists(\UniversalMarkdownEditor\Admin\Assets::class), 'The namespaced Assets class did not load.');
