@@ -138,6 +138,23 @@ final class MarkdownRepository
             return false;
         }
 
+        global $wpdb;
+        $restoredDates = $wpdb->update(
+            $wpdb->posts,
+            [
+                'post_modified' => $snapshot['post']['post_modified'],
+                'post_modified_gmt' => $snapshot['post']['post_modified_gmt'],
+            ],
+            ['ID' => $postId],
+            ['%s', '%s'],
+            ['%d']
+        );
+
+        if ($restoredDates === false) {
+            return false;
+        }
+
+        clean_post_cache($postId);
         $post = $this->getPost($postId);
         if (!$post instanceof WP_Post) {
             return false;

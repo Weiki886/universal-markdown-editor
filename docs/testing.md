@@ -37,11 +37,12 @@ proof that the code is free from all vulnerabilities.
 
 ## Declared Compatibility
 
-The plugin header declares WordPress 6.4+ and PHP 8.1+. The current integration
-environment is pinned to WordPress 7.1.4 and PHP 8.1. The minimum WordPress
-version, other PHP versions, non-default themes, and browser viewport/keyboard
-combinations are not yet covered by a complete automated matrix. A declaration
-of minimum requirements is not evidence that every combination has been tested.
+The plugin header declares WordPress 6.4+ and PHP 8.1+. CI runs the WordPress
+integration suite across WordPress 6.4.14 and 7.1.4, each with PHP 8.1, 8.2,
+and 8.3. This is a bounded compatibility sample, not proof for every WordPress
+maintenance release, PHP version, database, or hosting configuration. The
+non-default theme and browser viewport/keyboard workflows still require manual
+acceptance.
 
 The plugin is intended for the Gutenberg post editor. The Classic Editor,
 non-post content types, theme-specific shortcodes, and lossless conversion of
