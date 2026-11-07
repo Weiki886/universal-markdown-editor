@@ -5,10 +5,10 @@ Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
 Stable tag: 0.1.0
-License: GPLv2 or later
+License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Write WordPress posts in Markdown from the Gutenberg editor. Review a server-rendered preview, use the formatting toolbar, and insert media from the WordPress media library. The plugin keeps Markdown source in private post metadata and saves standard HTML to post_content.
+Edit posts in Markdown with a Gutenberg workspace, server-rendered preview, formatting tools, and media library support.
 
 == Description ==
 
@@ -55,6 +55,10 @@ Markdown source is stored in post metadata and access to editor sessions is perm
 = What happens when the plugin is deactivated or uninstalled? =
 
 Deactivation leaves the saved HTML in post_content, so themes can continue to display it. Uninstallation does not delete post content or Markdown metadata by default.
+
+== Screenshots ==
+
+Screenshots will be added after the editor has been verified in a clean WordPress installation. No screenshots are included in this pre-release readme yet.
 
 == Changelog ==
 
