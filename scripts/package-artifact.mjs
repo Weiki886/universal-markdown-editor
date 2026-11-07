@@ -30,6 +30,13 @@ export function createArtifact({ sourceDir, outputDir, sourceSha }) {
 		throw new Error(`The plugin entry file is missing: ${entryPath}`);
 	}
 
+	const readmePath = path.join(resolvedSource, 'readme.txt');
+	try {
+		readFileSync(readmePath, 'utf8');
+	} catch {
+		throw new Error(`The WordPress.org readme.txt is missing: ${readmePath}`);
+	}
+
 	const version = entry.match(/^\s*\*\s*Version:\s*([0-9]+\.[0-9]+\.[0-9]+)\s*$/m)?.[1];
 	if (!version) {
 		throw new Error('The plugin entry file does not declare a valid semantic version.');

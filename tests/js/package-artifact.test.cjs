@@ -26,6 +26,7 @@ test('creates a versioned development ZIP with source SHA and matching checksum'
 		path.join(sourceDir, 'universal-markdown-editor.php'),
 		'<?php\n * Version: 0.1.0\n',
 	);
+	writeFileSync(path.join(sourceDir, 'readme.txt'), '=== Universal Markdown Editor ===\n');
 	writeFileSync(path.join(sourceDir, 'plugin.php'), '<?php // package fixture');
 	writeFileSync(path.join(sourceDir, '.DS_Store'), 'must not ship');
 
@@ -39,6 +40,7 @@ test('creates a versioned development ZIP with source SHA and matching checksum'
 
 		assert.equal(path.basename(artifact.zipPath), expectedName);
 		assert.match(entries, /universal-markdown-editor\/universal-markdown-editor\.php/);
+		assert.match(entries, /universal-markdown-editor\/readme\.txt/);
 		assert.match(entries, /universal-markdown-editor\/BUILD-INFO\.txt/);
 		assert.doesNotMatch(entries, /\.DS_Store/);
 		assert.match(
@@ -52,6 +54,24 @@ test('creates a versioned development ZIP with source SHA and matching checksum'
 			`${createHash('sha256').update(zip).digest('hex')}  ${expectedName}\n`,
 		);
 		assert.equal(readFileSync(artifact.sourcePath, 'utf8'), `${sourceSha}\n`);
+	} finally {
+		rmSync(root, { recursive: true, force: true });
+	}
+});
+
+test('rejects a package directory without the WordPress.org readme', async () => {
+	const { createArtifact } = await packageArtifact;
+	const root = mkdtempSync(path.join(os.tmpdir(), 'ume-artifact-readme-missing-'));
+	const sourceDir = path.join(root, 'plugin');
+
+	mkdirSync(sourceDir);
+	writeFileSync(path.join(sourceDir, 'universal-markdown-editor.php'), '* Version: 0.1.0');
+
+	try {
+		assert.throws(
+			() => createArtifact({ sourceDir, outputDir: path.join(root, 'out'), sourceSha: 'c'.repeat(40) }),
+			/readme\.txt is missing/i,
+		);
 	} finally {
 		rmSync(root, { recursive: true, force: true });
 	}
