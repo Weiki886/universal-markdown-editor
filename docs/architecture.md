@@ -1,4 +1,4 @@
-# Universal Markdown Editor for WordPress：第一版架构
+# Universal Markdown Editor：第一版架构
 
 - 状态：Accepted；用户于 2026-11-04 明确接受第 12 节全部六项取舍
 - 产品依据：#1

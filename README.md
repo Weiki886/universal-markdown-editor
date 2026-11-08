@@ -1,4 +1,4 @@
-# Universal Markdown Editor for WordPress
+# Universal Markdown Editor
 
 A universal, theme-independent Markdown workspace for WordPress posts. The
 editor keeps the Markdown source private while storing safe, standard

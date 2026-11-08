@@ -34,7 +34,7 @@ $wordpressVersion = get_bloginfo('version');
 
 $check(is_plugin_active($pluginBasename), 'The plugin is not active.');
 $check(defined('UME_VERSION') && UME_VERSION === '0.1.0', 'UME_VERSION is missing or incorrect.');
-$check($pluginHeaders['name'] === 'Universal Markdown Editor for WordPress', 'The plugin name header is incorrect.');
+$check($pluginHeaders['name'] === 'Universal Markdown Editor', 'The plugin name header is incorrect.');
 $check($pluginHeaders['version'] === '0.1.0', 'The plugin version header is incorrect.');
 $check($pluginHeaders['requiresAtLeast'] === '6.4', 'The minimum WordPress version header is incorrect.');
 $check($pluginHeaders['requiresPHP'] === '8.1', 'The minimum PHP version header is incorrect.');
