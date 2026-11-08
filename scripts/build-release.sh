@@ -55,7 +55,7 @@ npm run build
 
 mkdir -p "$RELEASE_DIR/build"
 cp -R build/. "$RELEASE_DIR/build/"
-cp universal-markdown-editor.php LICENSE README.md CHANGELOG.md "$RELEASE_DIR/"
+cp universal-markdown-editor.php LICENSE README.md CHANGELOG.md readme.txt "$RELEASE_DIR/"
 
 echo "Isolating plugin source dependency references..."
 docker run --rm \

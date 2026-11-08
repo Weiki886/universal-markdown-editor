@@ -5,10 +5,11 @@ editor keeps the Markdown source private while storing safe, standard
 HTML in `post_content`, so the front end and native WordPress workflows remain
 usable.
 
-> **Project status:** the Gutenberg Markdown workspace, server-rendered preview,
-> dual Markdown/HTML storage, formatting toolbar, and WordPress media insertion
-> are under active development. The plugin is
-> not yet ready for production use; follow the linked Issues and CI status.
+> **Project status:** the MVP implementation and automated compatibility
+> matrix are complete, but this is still a pre-release build. Clean-install,
+> theme, browser/keyboard, upgrade, and rollback acceptance is outstanding.
+> Do not use the development ZIP on a production site or treat it as an
+> official WordPress.org release.
 
 ## Quick Start
 
@@ -37,10 +38,11 @@ conflict handling, failed-save recovery, and media capability wiring.
 
 ## Development environment
 
-The local and CI integration baseline is pinned in `.wp-env.json` to WordPress
-7.1.4 and PHP 8.1. The minimum supported versions remain WordPress 6.4 and PHP
-8.1 as declared by the plugin header. Issue #8 owns the full clean-environment
-compatibility and release matrix.
+The local integration baseline is pinned in `.wp-env.json` to WordPress 7.1.4
+and PHP 8.1. CI tests WordPress 6.4.14 and 7.1.4 with PHP 8.1, 8.2, and 8.3.
+The plugin header declares WordPress 6.4 and PHP 8.1 as minimums. This bounded
+matrix does not replace the clean-install, theme, browser, or upgrade checks
+listed in [Testing](docs/testing.md).
 
 Useful commands:
 
