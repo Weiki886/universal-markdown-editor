@@ -4,7 +4,7 @@ This file governs all design, development, testing, review, and GitHub collabora
 
 ## 1. Project Positioning
 
-**Universal Markdown Editor for WordPress** is an independent, general-purpose, publicly maintained WordPress plugin that gives users who prefer Markdown source writing a Gutenberg editing experience.
+**Universal Markdown Editor** is an independent, general-purpose, publicly maintained WordPress plugin that gives users who prefer Markdown source writing a Gutenberg editing experience.
 
 The first version aims to provide Markdown source editing, live preview, a common formatting toolbar, and WordPress media library insertion on the post editing screen. It must also preserve editable Markdown source and standard HTML that themes can render directly.
 

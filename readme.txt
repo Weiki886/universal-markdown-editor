@@ -1,4 +1,4 @@
-=== Universal Markdown Editor for WordPress ===
+=== Universal Markdown Editor ===
 Contributors: weiki886
 Tags: markdown, gutenberg, editor, writing, media
 Requires at least: 6.4

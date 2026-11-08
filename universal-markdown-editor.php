@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Universal Markdown Editor for WordPress
+ * Plugin Name: Universal Markdown Editor
  * Description: Edit WordPress posts from a focused Markdown source workspace.
  * Version: 0.1.0
  * Requires at least: 6.4
