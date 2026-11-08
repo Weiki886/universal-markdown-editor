@@ -14,6 +14,8 @@ Edit posts in Markdown with a Gutenberg workspace, server-rendered preview, form
 
 Universal Markdown Editor adds a Markdown workspace to the Gutenberg post editor. It is designed for writers who prefer Markdown source while keeping saved post content available to WordPress themes as standard HTML.
 
+Write WordPress posts in Markdown from the Gutenberg editor. Review a server-rendered preview, use the formatting toolbar, and insert media from the WordPress media library. The plugin keeps Markdown source in private post metadata and saves standard HTML to post_content.
+
 = Features =
 
 * Edit Markdown source and review a server-rendered HTML preview.
