@@ -70,6 +70,21 @@ report and environment versions. Plugin Check supplements the manual acceptance
 record below; it cannot replace theme/browser checks, real screenshots, or
 human review. This workflow does not submit or publish the plugin.
 
+The initial run (`42573283901`) found two errors and 13 warnings. The focused
+corrections protect the autoloader from direct access and separate conversion
+exception construction from throwing; the original cause remains private and
+the public error message stays fixed. Unit tests exercise the autoloader both
+outside and inside a WordPress bootstrap, and check that parser/sanitizer
+exception details never enter the public message. Unit and scoped-build smoke
+test bootstraps define `ABSPATH` explicitly; they are not full WordPress
+integration environments.
+
+[Issue #26](https://github.com/Weiki886/universal-markdown-editor-for-wordpress/issues/26)
+tracks all 13 warnings: missing Composer metadata, direct database calls,
+operational logging, global-variable prefixes, and Hook prefixes. They remain
+open until fixed or individually justified with evidence before submission.
+Do not interpret an error-free report as disposition of those warnings.
+
 ## Declared Compatibility
 
 The plugin header declares WordPress 6.4+ and PHP 8.1+. CI runs the WordPress

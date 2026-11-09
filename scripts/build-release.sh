@@ -99,6 +99,7 @@ docker run --rm \
             exit(1);
         }
 
+        define("ABSPATH", "/plugin/");
         require "/plugin/src/autoload.php";
 
         $sanitizer = new class implements UniversalMarkdownEditor\Markdown\HtmlSanitizerInterface {
