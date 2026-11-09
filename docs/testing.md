@@ -35,6 +35,41 @@ audit. Review them before changing the build toolchain or preparing a formal
 release. Credential scanning and dependency audits are automated checks, not
 proof that the code is free from all vulnerabilities.
 
+## Official Plugin Check on the ZIP
+
+After the existing verification job passes, the `WordPress Plugin Check` job
+downloads its development ZIP artifact, requires exactly one ZIP, verifies its
+SHA-256 sidecar and source SHA against the workflow commit, and checks the
+embedded `BUILD-INFO.txt` source SHA. It extracts a separate copy for scanning;
+the original ZIP and sidecars remain in the development-build artifact.
+
+The job uses the official `WordPress/plugin-check-action` v1.1.9, pinned to
+`10857da14b6c2246d15402b3e69f777edcf8c12e`, on WordPress 7.1.4 / PHP 8.1.
+Repository permissions remain read-only and automatic PR comments are disabled.
+No checks, categories, files, or finding codes are filtered by our workflow.
+The action's default non-experimental checks run: errors fail CI; warnings
+remain in the report and must be reviewed and resolved or explicitly justified
+before any directory submission. A green job does not mean there are no
+warnings, nor does it guarantee acceptance by the WordPress.org review team.
+
+Open the workflow run and download `plugin-check-results` for the checker
+report, `plugin-check-provenance` for the run URL/source SHA/ZIP checksum, and
+`universal-markdown-editor-development-build` for that exact ZIP and sidecars.
+The action attempts to upload its report even on failure; a startup or tooling
+failure may leave no report, in which case inspect the job logs rather than
+recording a clean scan. Download evidence before its artifact retention expires
+(the ZIP and provenance expire after seven days; the report follows the
+action's default repository retention).
+
+The action installs its own current `@wordpress/env` and Plugin Check versions;
+they are not pinned by the action reference. Consult its environment and plugin
+listing logs for the actual versions used. The pinned action and traceable ZIP
+provide repeatable execution and attributable findings, not a hermetic scanner
+snapshot. Run a fresh check on the exact submission candidate and retain its
+report and environment versions. Plugin Check supplements the manual acceptance
+record below; it cannot replace theme/browser checks, real screenshots, or
+human review. This workflow does not submit or publish the plugin.
+
 ## Declared Compatibility
 
 The plugin header declares WordPress 6.4+ and PHP 8.1+. CI runs the WordPress
