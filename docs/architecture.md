@@ -78,6 +78,8 @@
 
 规划命名空间为 `UniversalMarkdownEditor\\`，REST 命名空间为 `ume/v1`，JS/CSS handle 前缀为 `ume-`，hook 前缀为 `ume_`。插件主入口仅负责兼容检查和容器装配。
 
+> 2026-11-09 实施更新：ADR 0002 将公开 Hook 前缀改为 `universal_markdown_editor_`，以符合 WordPress 全局命名空间规范。`_ume_*` 私有 meta、`ume/v1` REST 命名空间和 `ume-` 静态资源 handle 不变。
+
 ```text
 Gutenberg sidebar/menu
         |
