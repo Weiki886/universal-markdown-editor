@@ -70,6 +70,11 @@ docker run --rm \
     --prefix=UME_Vendor \
     --force
 
+# This bootstrap only references plugin classes and must remain unscoped so
+# WordPress repository checks recognize its direct-access guard.
+cp src/autoload.php "$RELEASE_DIR/src/autoload.php"
+grep -Fq "if (!defined('ABSPATH'))" "$RELEASE_DIR/src/autoload.php"
+
 mkdir -p "$RELEASE_DIR/docs"
 cp docs/dependency-licenses.md "$RELEASE_DIR/docs/dependency-licenses.md"
 
@@ -99,6 +104,7 @@ docker run --rm \
             exit(1);
         }
 
+        define("ABSPATH", "/plugin/");
         require "/plugin/src/autoload.php";
 
         $sanitizer = new class implements UniversalMarkdownEditor\Markdown\HtmlSanitizerInterface {

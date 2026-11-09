@@ -44,7 +44,9 @@ final class Converter
         try {
             return $this->sanitizer->sanitize($this->parser->convert($source)->getContent());
         } catch (Throwable $exception) {
-            throw ConversionException::conversionFailed($exception);
+            // The factory exposes a fixed message and retains diagnostics only as the cause.
+            $failure = ConversionException::conversionFailed($exception);
+            throw $failure;
         }
     }
 

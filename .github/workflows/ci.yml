@@ -129,3 +129,61 @@ jobs:
           path: dist/artifacts/*
           if-no-files-found: error
           retention-days: 7
+
+  plugin-check:
+    name: WordPress Plugin Check
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      WP_ENV_CORE: https://downloads.wordpress.org/release/wordpress-7.1.4.zip
+      WP_ENV_PHP_VERSION: '8.1'
+
+    steps:
+      - name: Download verified development ZIP
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: universal-markdown-editor-development-build
+          path: dist/artifacts
+
+      - name: Verify and extract the exact package
+        shell: bash
+        env:
+          UME_SOURCE_SHA: ${{ github.sha }}
+          UME_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          cd dist/artifacts
+          packages=( *.zip )
+          test "${#packages[@]}" -eq 1
+          package="${packages[0]}"
+          sha256sum -c "${package}.sha256"
+          test "$(cat "${package}.source")" = "$UME_SOURCE_SHA"
+          mkdir -p ../plugin-check
+          unzip -q "$package" -d ../plugin-check
+          plugin=../plugin-check/universal-markdown-editor
+          test -f "$plugin/universal-markdown-editor.php"
+          test -f "$plugin/readme.txt"
+          grep -Fx "Source commit: $UME_SOURCE_SHA" "$plugin/BUILD-INFO.txt"
+          {
+            echo "Workflow run: $UME_RUN_URL"
+            echo "Source commit: $UME_SOURCE_SHA"
+            echo "Plugin Check action: 10857da14b6c2246d15402b3e69f777edcf8c12e (v1.1.9)"
+            sha256sum "$package"
+          } | tee "$RUNNER_TEMP/plugin-check-provenance.txt"
+
+      - name: Check packaged plugin with official tooling
+        uses: WordPress/plugin-check-action@10857da14b6c2246d15402b3e69f777edcf8c12e # v1.1.9
+        with:
+          build-dir: dist/plugin-check/universal-markdown-editor
+          repo-token: ''
+
+      - name: Upload package check provenance
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: plugin-check-provenance
+          path: ${{ runner.temp }}/plugin-check-provenance.txt
+          if-no-files-found: warn
+          retention-days: 7
