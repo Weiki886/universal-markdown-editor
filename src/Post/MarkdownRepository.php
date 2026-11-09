@@ -139,6 +139,7 @@ final class MarkdownRepository
         }
 
         global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- wp_update_post() re-stamps modification dates; this direct update restores the exact snapshot required by failure compensation.
         $restoredDates = $wpdb->update(
             $wpdb->posts,
             [

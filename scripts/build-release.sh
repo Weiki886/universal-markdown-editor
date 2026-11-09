@@ -48,7 +48,13 @@ docker run --rm \
     --env COMPOSER_HOME=/tmp/composer-home \
     "$COMPOSER_IMAGE" dump-autoload --no-dev --classmap-authoritative
 
-node -e 'const fs=require("node:fs"); for (const file of ["composer.json","composer.lock"]) fs.rmSync(process.argv[1] + "/" + file, {force:true})' "$RELEASE_DIR"
+node scripts/write-release-composer.mjs composer.json "$RELEASE_DIR/composer.json"
+node -e 'require("node:fs").rmSync(process.argv[1] + "/composer.lock", {force:true})' "$RELEASE_DIR"
+
+docker run --rm \
+    --volume "$RELEASE_DIR:/app:ro" \
+    --workdir /app \
+    "$COMPOSER_IMAGE" validate --strict --no-check-lock
 
 echo "Building admin assets..."
 npm run build
@@ -135,7 +141,6 @@ for forbidden in \
     .codex \
     node_modules \
     tests \
-    composer.json \
     composer.lock \
     vendor/humbug \
     vendor/phpunit
@@ -155,6 +160,15 @@ do
         exit 1
     fi
 done
+
+test -f "$RELEASE_DIR/composer.json"
+node -e '
+    const fs = require("node:fs");
+    const manifest = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+    if ("require-dev" in manifest || "scripts" in manifest || "config" in manifest) {
+        throw new Error("Release composer.json contains development metadata.");
+    }
+' "$RELEASE_DIR/composer.json"
 
 docker run --rm \
     --volume "$RELEASE_DIR:/plugin:ro" \

@@ -338,6 +338,7 @@ final class SaveService
             }
 
             global $wpdb;
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Reclaiming an expired lock must atomically match both its name and serialized value; delete_option() cannot express that compare-and-delete.
             $wpdb->delete(
                 $wpdb->options,
                 ['option_name' => $optionName, 'option_value' => maybe_serialize($currentLock)],
@@ -359,6 +360,7 @@ final class SaveService
             return $callback();
         } finally {
             global $wpdb;
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Releasing the lock must match this request's token so a newer request's lock is never deleted.
             $wpdb->delete(
                 $wpdb->options,
                 ['option_name' => $optionName, 'option_value' => maybe_serialize($lock)],
@@ -376,7 +378,8 @@ final class SaveService
     private function failAndRestore(int $postId, array $snapshot, string $stage): WP_Error
     {
         $restored = $this->repository->restore($postId, $snapshot);
-        error_log(sprintf('UME Markdown save failed for post %d during %s; restore=%s.', $postId, $stage, $restored ? 'ok' : 'failed'));
+        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- The storage contract requires failure visibility; this message contains only a post ID, fixed stage, and restore status.
+        error_log(SaveDiagnostics::failureMessage($postId, $stage, $restored));
 
         return new WP_Error(
             'ume_save_failed',

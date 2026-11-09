@@ -56,7 +56,13 @@ The release build keeps `src/autoload.php` unscoped. It contains only the
 plugin bootstrap and no Composer dependency references; keeping its
 `ABSPATH` guard outside PHP-Scoper's namespace wrapper also lets repository
 checks inspect the guard in the exact packaged file. The build fails if that
-guard is absent.
+guard is absent. The packaged root includes a generated production
+`composer.json` describing the plugin and runtime requirements. It is written
+from reviewed source metadata, excludes development dependencies and scripts,
+converts exact production pins to compatible Caret constraints so the
+publishable manifest passes strict validation, and the build validates it with
+Composer. The source `composer.json` and `composer.lock` retain their exact
+pins. `composer.lock` remains excluded from the release.
 
 Open the workflow run and download `plugin-check-results` for the checker
 report, `plugin-check-provenance` for the run URL/source SHA/ZIP checksum, and
@@ -86,10 +92,25 @@ test bootstraps define `ABSPATH` explicitly; they are not full WordPress
 integration environments.
 
 [Issue #26](https://github.com/Weiki886/universal-markdown-editor-for-wordpress/issues/26)
-tracks all 13 warnings: missing Composer metadata, direct database calls,
-operational logging, global-variable prefixes, and Hook prefixes. They remain
-open until fixed or individually justified with evidence before submission.
-Do not interpret an error-free report as disposition of those warnings.
+tracks the initial 13 warnings. The disposition is recorded below rather than
+treated as an inert allowlist. Exact, local PHPCS comments are used only for
+the database and logging cases that are required by the accepted storage
+contract; the workflow does not suppress warning categories, files, or finding
+codes globally.
+
+| Warning | Occurrences | Disposition | Verification |
+| --- | ---: | --- | --- |
+| `missing_composer_json_file` | 1 | The release build now generates a minimal production `composer.json` and excludes the lockfile. | JavaScript metadata tests, Composer strict validation during the release build, and packaged Plugin Check. |
+| `WordPress.DB.DirectDatabaseQuery.DirectQuery` | 3 | Retained with a separate precise rationale at each call. The two option deletes require compare-and-delete semantics for per-post lock ownership; the posts update restores exact modification timestamps after failed-save compensation. | Storage integration cases for expired-lock recovery, lock release, injected failure, restoration, and unchanged modified time. |
+| `WordPress.PHP.DevelopmentFunctions.error_log_error_log` | 1 | Retained with a precise rationale because silent save failure violates the operational contract. `SaveDiagnostics` emits only post ID, a validated stage, and restore status. | PHP unit test proves malformed stages cannot inject private Markdown into the diagnostic message, plus failed-save integration coverage. |
+| `WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound` | 5 | The entrypoint compatibility and autoloader work now runs inside a static IIFE, so no plugin-global variables are introduced. | PHP subprocess tests cover unsupported and missing-dependency notices and assert the variables do not leak into `$GLOBALS`; Plugin Check covers packaging. |
+| `WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound` | 3 | The unreleased public Hooks now use `universal_markdown_editor_`, as recorded in ADR 0002. Legacy short aliases are intentionally not emitted. | Plugin smoke integration asserts full-prefix Hooks fire and short Hooks do not; Plugin Check covers packaging. |
+
+The final PR report must link the exact successful Plugin Check run, source
+commit, ZIP SHA-256, actual WordPress/PHP runtime, and checker/action versions.
+Those values are recorded after the source commit is immutable and therefore
+are not embedded back into the source tree. Remaining manual acceptance items
+in this document are separate from warning disposition.
 
 ## Declared Compatibility
 

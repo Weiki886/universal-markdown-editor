@@ -71,13 +71,25 @@ $check(
     has_action('deactivate_' . $pluginBasename, [\UniversalMarkdownEditor\Lifecycle::class, 'deactivate']) !== false,
     'The deactivation lifecycle hook is not registered.'
 );
+$check(
+    did_action('universal_markdown_editor_loaded') === 1,
+    'The fully prefixed plugin-loaded action did not fire exactly once.'
+);
+$check(did_action('ume_loaded') === 0, 'The legacy short plugin-loaded hook was fired.');
 
 $lifecycleEvents = [];
-add_action('ume_deactivated', static function () use (&$lifecycleEvents): void {
+$legacyLifecycleEvents = [];
+add_action('universal_markdown_editor_deactivated', static function () use (&$lifecycleEvents): void {
     $lifecycleEvents[] = 'deactivated';
 });
-add_action('ume_activated', static function () use (&$lifecycleEvents): void {
+add_action('universal_markdown_editor_activated', static function () use (&$lifecycleEvents): void {
     $lifecycleEvents[] = 'activated';
+});
+add_action('ume_deactivated', static function () use (&$legacyLifecycleEvents): void {
+    $legacyLifecycleEvents[] = 'deactivated';
+});
+add_action('ume_activated', static function () use (&$legacyLifecycleEvents): void {
+    $legacyLifecycleEvents[] = 'activated';
 });
 
 $postsBefore = $rowCount($wpdb->posts);
@@ -99,6 +111,7 @@ $check(
     $lifecycleEvents === ['deactivated', 'activated'],
     'The activation or deactivation action did not fire in the expected order.'
 );
+$check($legacyLifecycleEvents === [], 'A legacy short lifecycle hook was fired.');
 
 $GLOBALS['current_screen'] = WP_Screen::get('post');
 $adminIds = get_users([
