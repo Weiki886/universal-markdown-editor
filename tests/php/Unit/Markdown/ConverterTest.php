@@ -157,7 +157,7 @@ final class ConverterTest extends TestCase
 
     public function testParserFailureIsWrappedWithoutInvokingTheSanitizer(): void
     {
-        $failure = new RuntimeException('Parser failed.');
+        $failure = new RuntimeException('<script>private parser diagnostic</script>');
         $parser = $this->createMock(ConverterInterface::class);
         $parser->method('convert')->willThrowException($failure);
         $sanitizer = $this->createMock(HtmlSanitizerInterface::class);
@@ -170,13 +170,14 @@ final class ConverterTest extends TestCase
         } catch (ConversionException $exception) {
             self::assertSame('ume_conversion_failed', $exception->errorCode());
             self::assertSame($failure, $exception->getPrevious());
+            self::assertSame('Markdown conversion failed.', $exception->getMessage());
             self::assertStringNotContainsString('private source', $exception->getMessage());
         }
     }
 
     public function testSanitizerFailureDoesNotReturnPartialHtml(): void
     {
-        $failure = new RuntimeException('Sanitizer failed.');
+        $failure = new RuntimeException('<script>private sanitizer diagnostic</script>');
         $rendered = $this->createMock(RenderedContentInterface::class);
         $rendered->method('getContent')->willReturn('<p>partial secret</p>');
         $parser = $this->createMock(ConverterInterface::class);
@@ -191,6 +192,7 @@ final class ConverterTest extends TestCase
         } catch (ConversionException $exception) {
             self::assertSame('ume_conversion_failed', $exception->errorCode());
             self::assertSame($failure, $exception->getPrevious());
+            self::assertSame('Markdown conversion failed.', $exception->getMessage());
             self::assertStringNotContainsString('partial secret', $exception->getMessage());
         }
     }
