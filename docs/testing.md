@@ -52,6 +52,12 @@ remain in the report and must be reviewed and resolved or explicitly justified
 before any directory submission. A green job does not mean there are no
 warnings, nor does it guarantee acceptance by the WordPress.org review team.
 
+The release build keeps `src/autoload.php` unscoped. It contains only the
+plugin bootstrap and no Composer dependency references; keeping its
+`ABSPATH` guard outside PHP-Scoper's namespace wrapper also lets repository
+checks inspect the guard in the exact packaged file. The build fails if that
+guard is absent.
+
 Open the workflow run and download `plugin-check-results` for the checker
 report, `plugin-check-provenance` for the run URL/source SHA/ZIP checksum, and
 `universal-markdown-editor-development-build` for that exact ZIP and sidecars.
