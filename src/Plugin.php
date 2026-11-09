@@ -27,6 +27,6 @@ final class Plugin
         register_activation_hook(UME_FILE, [Lifecycle::class, 'activate']);
         register_deactivation_hook(UME_FILE, [Lifecycle::class, 'deactivate']);
 
-        do_action('ume_loaded');
+        do_action('universal_markdown_editor_loaded');
     }
 }

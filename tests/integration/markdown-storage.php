@@ -70,6 +70,9 @@ $check(
 $check(is_array($unmanaged) && ($unmanaged['html'] ?? null) === '<p>Existing HTML</p>', 'The ordinary post HTML was not returned as the preview baseline.');
 $check(is_array($unmanaged) && ($unmanaged['contentHash'] ?? null) === hash('sha256', '<p>Existing HTML</p>'), 'The unmanaged content hash is incorrect.');
 
+$lockOption = 'ume_markdown_save_lock_' . $existingId;
+add_option($lockOption, ['token' => 'expired-request', 'expires' => time() - 1], '', false);
+
 $source = "# Saved\n\nOriginal **Markdown**; literal \\*markers\\*.\n";
 $saveResponse = $request('PUT', $existingId, [
     'source' => $source,
@@ -93,6 +96,7 @@ $check(
 $check(is_array($saved) && ($saved['managed'] ?? null) === true, 'A successful save did not mark the post as managed.');
 $check(is_array($saved) && ($saved['source'] ?? null) === $source, 'A successful save changed the Markdown source bytes.');
 $check(is_array($saved) && ($saved['html'] ?? null) === $expectedHtml, 'A successful save did not return sanitized server-rendered HTML.');
+$check(get_option($lockOption, null) === null, 'A successful save did not release its per-post save lock.');
 $check(get_post_field('post_content', $existingId) === $expectedHtml, 'post_content does not contain the server-rendered HTML.');
 $check(get_post_meta($existingId, '_ume_markdown_source', true) === $source, 'The private Markdown source was not persisted.');
 $check(get_post_meta($existingId, '_ume_content_format', true) === 'markdown', 'The content format marker was not persisted.');
@@ -176,7 +180,6 @@ $oversizedSaveResponse = $request('PUT', $existingId, [
 $check($oversizedSaveResponse->get_status() === 413, 'A Markdown source above 1 MiB was not rejected with HTTP 413.');
 $check(get_post_meta($existingId, '_ume_markdown_source', true) === $sourceWithEquivalentOutput, 'Invalid input changed the stored Markdown source.');
 
-$lockOption = 'ume_markdown_save_lock_' . $existingId;
 add_option($lockOption, ['token' => 'another-request', 'expires' => time() + 30], '', false);
 $lockedSaveResponse = $request('PUT', $existingId, [
     'source' => '# Concurrent Save',
