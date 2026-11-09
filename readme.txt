@@ -1,5 +1,5 @@
 === Universal Markdown Editor ===
-Contributors: weiki886
+Contributors: weiki
 Tags: markdown, gutenberg, editor, writing, media
 Requires at least: 6.4
 Tested up to: 7.1
