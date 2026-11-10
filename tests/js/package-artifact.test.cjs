@@ -29,6 +29,14 @@ test('creates a versioned development ZIP with source SHA and matching checksum'
 	writeFileSync(path.join(sourceDir, 'readme.txt'), '=== Universal Markdown Editor ===\n');
 	writeFileSync(path.join(sourceDir, 'plugin.php'), '<?php // package fixture');
 	writeFileSync(path.join(sourceDir, '.DS_Store'), 'must not ship');
+	mkdirSync(path.join(sourceDir, 'languages'));
+	writeFileSync(path.join(sourceDir, 'languages', 'universal-markdown-editor.pot'), 'msgid ""\n');
+	writeFileSync(path.join(sourceDir, 'languages', 'universal-markdown-editor-zh_CN.po'), 'msgid ""\n');
+	writeFileSync(path.join(sourceDir, 'languages', 'universal-markdown-editor-zh_CN.mo'), 'fixture');
+	writeFileSync(
+		path.join(sourceDir, 'languages', 'universal-markdown-editor-zh_CN-ume-admin.json'),
+		'{"locale_data":{"universal-markdown-editor":{}}}',
+	);
 
 	try {
 		const artifact = createArtifact({ sourceDir, outputDir, sourceSha });
@@ -42,6 +50,13 @@ test('creates a versioned development ZIP with source SHA and matching checksum'
 		assert.match(entries, /universal-markdown-editor\/universal-markdown-editor\.php/);
 		assert.match(entries, /universal-markdown-editor\/readme\.txt/);
 		assert.match(entries, /universal-markdown-editor\/BUILD-INFO\.txt/);
+		assert.match(entries, /universal-markdown-editor\/languages\/universal-markdown-editor\.pot/);
+		assert.match(entries, /universal-markdown-editor\/languages\/universal-markdown-editor-zh_CN\.po/);
+		assert.match(entries, /universal-markdown-editor\/languages\/universal-markdown-editor-zh_CN\.mo/);
+		assert.match(
+			entries,
+			/universal-markdown-editor\/languages\/universal-markdown-editor-zh_CN-ume-admin\.json/,
+		);
 		assert.doesNotMatch(entries, /\.DS_Store/);
 		assert.match(
 			execFileSync('unzip', ['-p', artifact.zipPath, 'universal-markdown-editor/BUILD-INFO.txt'], {

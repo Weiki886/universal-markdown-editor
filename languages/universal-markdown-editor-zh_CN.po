@@ -1,0 +1,346 @@
+# Copyright (C) 2026 Weiki
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Universal Markdown Editor 0.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/universal-markdown-editor-for-wordpress\n"
+"Last-Translator: Weiki\n"
+"Language-Team: Simplified Chinese\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2026-11-10 15:30+0800\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: universal-markdown-editor\n"
+
+
+#. Plugin Name of the plugin
+#: universal-markdown-editor.php
+msgid "Universal Markdown Editor"
+msgstr "Universal Markdown Editor"
+
+#. Description of the plugin
+#: universal-markdown-editor.php
+msgid "Edit WordPress posts from a focused Markdown source workspace."
+msgstr "在专注的 Markdown 源工作区中编辑 WordPress 文章。"
+
+#: src/Post/SaveService.php:32
+#: src/Post/SaveService.php:147
+#: src/REST/MarkdownPreviewController.php:36
+msgid "The requested post does not exist or is not supported."
+msgstr "请求的文章不存在或不受支持。"
+
+#: src/Post/SaveService.php:44
+#: src/Post/SaveService.php:161
+msgid "Markdown metadata is incomplete or unsupported. The post was not changed."
+msgstr "Markdown 元数据不完整或不受支持。文章未被更改。"
+
+#: src/Post/SaveService.php:66
+msgid "This post uses incomplete or unsupported Markdown metadata. It was not changed."
+msgstr "此文章使用了不完整或不受支持的 Markdown 元数据。文章未被更改。"
+
+#: src/Post/SaveService.php:77
+msgid "The saved Markdown and rendered content are inconsistent. Resolve the post before editing."
+msgstr "已保存的 Markdown 与渲染内容不一致。编辑前请先处理此文章。"
+
+#: src/Post/SaveService.php:108
+#: src/REST/MarkdownPreviewController.php:69
+msgid "Markdown source exceeds the 1 MiB limit."
+msgstr "Markdown 源超过 1 MiB 限制。"
+
+#: src/Post/SaveService.php:121
+#: src/REST/MarkdownPreviewController.php:82
+msgid "Markdown source is invalid."
+msgstr "Markdown 源无效。"
+
+#: src/Post/SaveService.php:122
+#: src/REST/MarkdownPreviewController.php:83
+msgid "Markdown could not be converted."
+msgstr "Markdown 无法转换。"
+
+#: src/Post/SaveService.php:183
+msgid "The post changed after this editing session started. Reload or copy your Markdown before saving again."
+msgstr "文章在本次编辑会话开始后发生了更改。请重新加载或在再次保存前复制你的 Markdown。"
+
+#: src/Post/SaveService.php:192
+msgid "The requested post no longer exists."
+msgstr "请求的文章已不存在。"
+
+#: src/Post/SaveService.php:202
+msgid "The current post state could not be secured in a WordPress revision. No content was changed."
+msgstr "无法在当前文章的 WordPress 修订版本中保护当前文章状态。内容未被更改。"
+
+#: src/Post/SaveService.php:341
+#: src/Post/SaveService.php:359
+msgid "Another Markdown save is in progress. Keep your source and retry after it finishes."
+msgstr "另一个 Markdown 保存正在进行。请保留你的源内容，并在其完成后重试。"
+
+#: src/Post/SaveService.php:393
+msgid "Markdown could not be saved. Previous post content and metadata were restored."
+msgstr "Markdown 无法保存。之前的文章内容和元数据已恢复。"
+
+#: src/Post/SaveService.php:394
+msgid "Markdown could not be saved or safely restored. Stop editing this post and recover it from WordPress revisions."
+msgstr "Markdown 无法保存或安全恢复。请停止编辑此文章，并从 WordPress 修订版本中恢复。"
+
+#: src/REST/MarkdownDocumentController.php:80
+msgid "The request must contain a Markdown source string and a valid editing baseline."
+msgstr "请求必须包含 Markdown 源字符串和有效的编辑基线。"
+
+#: src/REST/MarkdownPreviewController.php:46
+msgid "You are not allowed to preview this post."
+msgstr "你无权预览此文章。"
+
+#: src/REST/MarkdownPreviewController.php:61
+msgid "Markdown source must be a string."
+msgstr "Markdown 源必须是字符串。"
+
+#. translators: 1: minimum PHP version, 2: minimum WordPress version.
+#: universal-markdown-editor.php:68
+#, php-format
+msgid "Universal Markdown Editor requires PHP %1$s or later and WordPress %2$s or later."
+msgstr "Universal Markdown Editor 需要 PHP %1$s 或更高版本，以及 WordPress %2$s 或更高版本。"
+
+#: universal-markdown-editor.php:89
+msgid "Universal Markdown Editor dependencies are missing. Run composer install from the plugin directory."
+msgstr "Universal Markdown Editor 缺少依赖项。请在插件目录中运行 composer install。"
+
+#: src/index.js:41
+msgid "Bold"
+msgstr "加粗"
+
+#: src/index.js:42
+msgid "Italic"
+msgstr "斜体"
+
+#: src/index.js:45
+msgid "Strikethrough"
+msgstr "删除线"
+
+#: src/index.js:47
+msgid "Heading"
+msgstr "标题"
+
+#: src/index.js:50
+msgid "Bulleted list"
+msgstr "项目符号列表"
+
+#: src/index.js:54
+msgid "Numbered list"
+msgstr "编号列表"
+
+#: src/index.js:56
+msgid "Blockquote"
+msgstr "引用"
+
+#: src/index.js:57
+msgid "Inline code"
+msgstr "行内代码"
+
+#: src/index.js:60
+msgid "Code block"
+msgstr "代码块"
+
+#: src/index.js:62
+msgid "Table"
+msgstr "表格"
+
+#: src/index.js:71
+msgid "Markdown preview"
+msgstr "Markdown 预览"
+
+#: src/index.js:141
+msgid "Could not load the Markdown session."
+msgstr "无法加载 Markdown 会话。"
+
+#: src/index.js:203
+msgid "Preview is unavailable."
+msgstr "预览不可用。"
+
+#: src/index.js:304
+msgid "Enter a safe HTTP, HTTPS, mail, telephone, or relative URL."
+msgstr "请输入安全的 HTTP、HTTPS、邮件、电话或相对 URL。"
+
+#: src/index.js:327
+msgid "Your account does not have permission to upload or select media."
+msgstr "你的账户无权上传或选择媒体。"
+
+#: src/index.js:336
+msgid "The WordPress media library is unavailable. Reload the editor and try again."
+msgstr "WordPress 媒体库不可用。请重新加载编辑器后重试。"
+
+#: src/index.js:346
+msgid "Select or upload an image"
+msgstr "选择或上传图片"
+
+#: src/index.js:351
+#: src/index.js:617
+#: src/index.js:621
+msgid "Insert image"
+msgstr "插入图片"
+
+#: src/index.js:367
+msgid "The selected media did not provide a safe, permanent image URL."
+msgstr "所选媒体未提供安全、永久的图片 URL。"
+
+#: src/index.js:395
+msgid "The media library could not be opened."
+msgstr "无法打开媒体库。"
+
+#: src/index.js:430
+msgid "Markdown could not be saved."
+msgstr "Markdown 无法保存。"
+
+#: src/index.js:454
+msgid "WordPress revisions are disabled for this post type. Markdown can still be saved, but historical recovery is limited."
+msgstr "此文章类型已禁用 WordPress 修订版本。Markdown 仍可保存，但历史恢复能力有限。"
+
+#: src/index.js:464
+#: src/index.js:480
+#: src/index.js:492
+#: src/index.js:530
+#: src/index.js:570
+#: src/index.js:936
+msgid "Markdown editor"
+msgstr "Markdown 编辑器"
+
+#: src/index.js:471
+msgid "Close"
+msgstr "关闭"
+
+#: src/index.js:502
+msgid "This post contains WordPress blocks, HTML, or shortcodes. It cannot be converted losslessly. The original content will remain unchanged."
+msgstr "此文章包含 WordPress 区块、HTML 或短代码，无法无损转换。原始内容将保持不变。"
+
+#: src/index.js:509
+#: src/index.js:544
+#: src/index.js:843
+msgid "Cancel"
+msgstr "取消"
+
+#: src/index.js:515
+msgid "Start with empty Markdown"
+msgstr "以空白 Markdown 开始"
+
+#: src/index.js:537
+msgid "Import this post's plain text as Markdown? No post content will be changed by opening or previewing it."
+msgstr "将此文章的纯文本作为 Markdown 导入？打开或预览不会更改任何文章内容。"
+
+#: src/index.js:550
+msgid "Start empty"
+msgstr "从空白开始"
+
+#: src/index.js:556
+msgid "Import current content"
+msgstr "导入当前内容"
+
+#: src/index.js:579
+msgid "Markdown formatting"
+msgstr "Markdown 格式"
+
+#: src/index.js:601
+#: src/index.js:605
+#: src/index.js:812
+#: src/index.js:846
+msgid "Insert link"
+msgstr "插入链接"
+
+#: src/index.js:613
+msgid "Link"
+msgstr "链接"
+
+#: src/index.js:638
+msgid "Image"
+msgstr "图片"
+
+#: src/index.js:645
+msgid "Media access requires the WordPress upload_files capability."
+msgstr "插入媒体需要 WordPress 的 upload_files 权限。"
+
+#: src/index.js:665
+msgid "Editor view"
+msgstr "编辑器视图"
+
+#: src/index.js:675
+msgid "Source"
+msgstr "源内容"
+
+#: src/index.js:682
+msgid "Preview"
+msgstr "预览"
+
+#: src/index.js:693
+msgid "Updating preview…"
+msgstr "正在更新预览…"
+
+#: src/index.js:700
+msgid "Preview updated"
+msgstr "预览已更新"
+
+#: src/index.js:706
+msgid "Exit Markdown mode"
+msgstr "退出 Markdown 模式"
+
+#: src/index.js:720
+msgid "Saving…"
+msgstr "正在保存…"
+
+#: src/index.js:721
+msgid "Save Markdown"
+msgstr "保存 Markdown"
+
+#: src/index.js:737
+msgid "Download Markdown"
+msgstr "下载 Markdown"
+
+#: src/index.js:748
+msgid "Reload post"
+msgstr "重新加载文章"
+
+#: src/index.js:767
+#: src/index.js:773
+#: src/index.js:792
+msgid "Markdown source"
+msgstr "Markdown 源"
+
+#: src/index.js:800
+msgid "Rendered preview"
+msgstr "渲染预览"
+
+#: src/index.js:816
+msgid "Text"
+msgstr "文本"
+
+#: src/index.js:822
+msgid "URL"
+msgstr "URL"
+
+#: src/index.js:853
+msgid "Discard this Markdown session?"
+msgstr "放弃此 Markdown 会话？"
+
+#: src/index.js:860
+msgid "These edits are not saved. The original Gutenberg content remains unchanged, but this Markdown session will be discarded."
+msgstr "这些编辑尚未保存。原始 Gutenberg 内容保持不变，但此 Markdown 会话将被丢弃。"
+
+#: src/index.js:870
+msgid "Keep editing"
+msgstr "继续编辑"
+
+#: src/index.js:880
+msgid "Discard session"
+msgstr "放弃会话"
+
+#: src/index.js:910
+msgid "Save your Gutenberg changes before opening Markdown mode."
+msgstr "打开 Markdown 模式前请先保存 Gutenberg 更改。"
+
+#: src/index.js:922
+msgid "Save the post in Gutenberg before opening Markdown mode."
+msgstr "打开 Markdown 模式前请先在 Gutenberg 中保存文章。"
+
+#: src/index.js:945
+msgid "Open Markdown workspace"
+msgstr "打开 Markdown 工作区"

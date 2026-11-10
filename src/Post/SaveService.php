@@ -29,7 +29,7 @@ final class SaveService
         if (!$post instanceof WP_Post || $post->post_type !== 'post') {
             return new WP_Error(
                 'ume_post_not_found',
-                'The requested post does not exist or is not supported.',
+                __('The requested post does not exist or is not supported.', 'universal-markdown-editor'),
                 ['status' => 404]
             );
         }
@@ -41,7 +41,7 @@ final class SaveService
         if (!$managed && $hasMeta) {
             return new WP_Error(
                 'ume_unsupported_version',
-                'Markdown metadata is incomplete or unsupported. The post was not changed.',
+                __('Markdown metadata is incomplete or unsupported. The post was not changed.', 'universal-markdown-editor'),
                 ['status' => 422]
             );
         }
@@ -63,7 +63,7 @@ final class SaveService
             ) {
                 return new WP_Error(
                     'ume_unsupported_version',
-                    'This post uses incomplete or unsupported Markdown metadata. It was not changed.',
+                    __('This post uses incomplete or unsupported Markdown metadata. It was not changed.', 'universal-markdown-editor'),
                     ['status' => 422]
                 );
             }
@@ -74,7 +74,7 @@ final class SaveService
             if (!hash_equals($expectedSourceHash, $actualSourceHash) || !hash_equals($expectedContentHash, $actualContentHash)) {
                 return new WP_Error(
                     'ume_content_inconsistent',
-                    'The saved Markdown and rendered content are inconsistent. Resolve the post before editing.',
+                    __('The saved Markdown and rendered content are inconsistent. Resolve the post before editing.', 'universal-markdown-editor'),
                     ['status' => 409]
                 );
             }
@@ -105,7 +105,7 @@ final class SaveService
         if (strlen($source) > Converter::MAX_SOURCE_BYTES) {
             return new WP_Error(
                 'ume_source_too_large',
-                'Markdown source exceeds the 1 MiB limit.',
+                __('Markdown source exceeds the 1 MiB limit.', 'universal-markdown-editor'),
                 ['status' => 413]
             );
         }
@@ -117,7 +117,9 @@ final class SaveService
 
             return new WP_Error(
                 $invalidSource ? 'ume_invalid_source' : 'ume_parse_failed',
-                $invalidSource ? 'Markdown source is invalid.' : 'Markdown could not be converted.',
+                $invalidSource
+                    ? __('Markdown source is invalid.', 'universal-markdown-editor')
+                    : __('Markdown could not be converted.', 'universal-markdown-editor'),
                 ['status' => $invalidSource ? 400 : 422]
             );
         }
@@ -142,7 +144,7 @@ final class SaveService
         if (!$post instanceof WP_Post || $post->post_type !== 'post') {
             return new WP_Error(
                 'ume_post_not_found',
-                'The requested post does not exist or is not supported.',
+                __('The requested post does not exist or is not supported.', 'universal-markdown-editor'),
                 ['status' => 404]
             );
         }
@@ -156,7 +158,7 @@ final class SaveService
         if (!$managed && $hasMeta) {
             return new WP_Error(
                 'ume_unsupported_version',
-                'Markdown metadata is incomplete or unsupported. The post was not changed.',
+                __('Markdown metadata is incomplete or unsupported. The post was not changed.', 'universal-markdown-editor'),
                 ['status' => 422]
             );
         }
@@ -178,14 +180,18 @@ final class SaveService
         if ($baselineChanged) {
             return new WP_Error(
                 'ume_edit_conflict',
-                'The post changed after this editing session started. Reload or copy your Markdown before saving again.',
+                __('The post changed after this editing session started. Reload or copy your Markdown before saving again.', 'universal-markdown-editor'),
                 ['status' => 409]
             );
         }
 
         $snapshot = $this->repository->snapshot($postId);
         if ($snapshot['post'] === []) {
-            return new WP_Error('ume_post_not_found', 'The requested post no longer exists.', ['status' => 404]);
+            return new WP_Error(
+                'ume_post_not_found',
+                __('The requested post no longer exists.', 'universal-markdown-editor'),
+                ['status' => 404]
+            );
         }
 
         $revisionsEnabled = wp_revisions_enabled($post);
@@ -193,7 +199,7 @@ final class SaveService
             if (!$this->saveRevision($postId)) {
                 return new WP_Error(
                     'ume_save_failed',
-                    'The current post state could not be secured in a WordPress revision. No content was changed.',
+                    __('The current post state could not be secured in a WordPress revision. No content was changed.', 'universal-markdown-editor'),
                     ['status' => 500, 'restored' => true]
                 );
             }
@@ -332,7 +338,7 @@ final class SaveService
             if (!is_array($currentLock) || (int) ($currentLock['expires'] ?? PHP_INT_MAX) > time()) {
                 return new WP_Error(
                     'ume_edit_conflict',
-                    'Another Markdown save is in progress. Keep your source and retry after it finishes.',
+                    __('Another Markdown save is in progress. Keep your source and retry after it finishes.', 'universal-markdown-editor'),
                     ['status' => 409]
                 );
             }
@@ -350,7 +356,7 @@ final class SaveService
             if (!add_option($optionName, $lock, '', false)) {
                 return new WP_Error(
                     'ume_edit_conflict',
-                    'Another Markdown save is in progress. Keep your source and retry after it finishes.',
+                    __('Another Markdown save is in progress. Keep your source and retry after it finishes.', 'universal-markdown-editor'),
                     ['status' => 409]
                 );
             }
@@ -384,8 +390,8 @@ final class SaveService
         return new WP_Error(
             'ume_save_failed',
             $restored
-                ? 'Markdown could not be saved. Previous post content and metadata were restored.'
-                : 'Markdown could not be saved or safely restored. Stop editing this post and recover it from WordPress revisions.',
+                ? __('Markdown could not be saved. Previous post content and metadata were restored.', 'universal-markdown-editor')
+                : __('Markdown could not be saved or safely restored. Stop editing this post and recover it from WordPress revisions.', 'universal-markdown-editor'),
             ['status' => 500, 'restored' => $restored]
         );
     }

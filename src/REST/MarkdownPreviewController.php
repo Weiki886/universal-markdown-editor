@@ -33,7 +33,7 @@ final class MarkdownPreviewController
         if (!$post instanceof \WP_Post || $post->post_type !== 'post') {
             return new WP_Error(
                 'ume_post_not_found',
-                'The requested post does not exist or is not supported.',
+                __('The requested post does not exist or is not supported.', 'universal-markdown-editor'),
                 ['status' => 404]
             );
         }
@@ -43,7 +43,7 @@ final class MarkdownPreviewController
 
             return new WP_Error(
                 'rest_forbidden',
-                'You are not allowed to preview this post.',
+                __('You are not allowed to preview this post.', 'universal-markdown-editor'),
                 ['status' => $status]
             );
         }
@@ -58,7 +58,7 @@ final class MarkdownPreviewController
         if (!is_string($source)) {
             return new WP_Error(
                 'ume_invalid_source',
-                'Markdown source must be a string.',
+                __('Markdown source must be a string.', 'universal-markdown-editor'),
                 ['status' => 400]
             );
         }
@@ -66,7 +66,7 @@ final class MarkdownPreviewController
         if (strlen($source) > Converter::MAX_SOURCE_BYTES) {
             return new WP_Error(
                 'ume_source_too_large',
-                'Markdown source exceeds the 1 MiB limit.',
+                __('Markdown source exceeds the 1 MiB limit.', 'universal-markdown-editor'),
                 ['status' => 413]
             );
         }
@@ -78,7 +78,9 @@ final class MarkdownPreviewController
 
             return new WP_Error(
                 $invalidSource ? 'ume_invalid_source' : 'ume_parse_failed',
-                $invalidSource ? 'Markdown source is invalid.' : 'Markdown could not be converted.',
+                $invalidSource
+                    ? __('Markdown source is invalid.', 'universal-markdown-editor')
+                    : __('Markdown could not be converted.', 'universal-markdown-editor'),
                 ['status' => $invalidSource ? 400 : 422]
             );
         }

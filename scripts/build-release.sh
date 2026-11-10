@@ -62,6 +62,20 @@ npm run build
 mkdir -p "$RELEASE_DIR/build"
 cp -R build/. "$RELEASE_DIR/build/"
 cp universal-markdown-editor.php LICENSE README.md CHANGELOG.md readme.txt "$RELEASE_DIR/"
+mkdir -p "$RELEASE_DIR/languages"
+cp -R languages/. "$RELEASE_DIR/languages/"
+
+for translation_file in \
+    universal-markdown-editor.pot \
+    universal-markdown-editor-zh_CN.po \
+    universal-markdown-editor-zh_CN.mo \
+    universal-markdown-editor-zh_CN-ume-admin.json
+do
+    if [ ! -s "$RELEASE_DIR/languages/$translation_file" ]; then
+        echo "Required translation file is missing or empty: $translation_file" >&2
+        exit 1
+    fi
+done
 
 echo "Isolating plugin source dependency references..."
 docker run --rm \
