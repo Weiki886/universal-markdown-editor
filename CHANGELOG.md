@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Restore exact post modification timestamps after failed Markdown saves.
 
+### Changed
+
+- Refine the Markdown workspace with a compact icon toolbar, full-height
+  aligned source and preview panels, internal scrolling, automatic preview
+  updates, and persistent save and exit actions below the editing surface.
+
 ### Added
 
 - Bundled English and Simplified Chinese localization for PHP messages and the

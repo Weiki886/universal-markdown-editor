@@ -23,6 +23,7 @@ import { registerPlugin } from '@wordpress/plugins';
 import { __ } from '@wordpress/i18n';
 /* eslint-enable import/no-unresolved, import/no-extraneous-dependencies */
 import { createPreviewRequest } from './Editor/preview-request';
+import { createPreviewSync } from './Editor/preview-sync';
 import {
 	applyMarkdownAction,
 	buildMarkdownImage,
@@ -35,32 +36,97 @@ import { isComplexContent } from './Editor/source-classification';
 apiFetch.use( apiFetch.createRootURLMiddleware( window.umeSettings.root ) );
 apiFetch.use( apiFetch.createNonceMiddleware( window.umeSettings.nonce ) );
 
-const PREVIEW_DEBOUNCE_MS = 400;
 const LOCK_NAME = 'ume-markdown-workspace';
-const TOOLBAR_ACTIONS = [
-	{ action: 'bold', label: __( 'Bold', 'universal-markdown-editor' ) },
-	{ action: 'italic', label: __( 'Italic', 'universal-markdown-editor' ) },
-	{
-		action: 'strikethrough',
-		label: __( 'Strikethrough', 'universal-markdown-editor' ),
-	},
-	{ action: 'heading', label: __( 'Heading', 'universal-markdown-editor' ) },
-	{
-		action: 'unorderedList',
-		label: __( 'Bulleted list', 'universal-markdown-editor' ),
-	},
-	{
-		action: 'orderedList',
-		label: __( 'Numbered list', 'universal-markdown-editor' ),
-	},
-	{ action: 'quote', label: __( 'Blockquote', 'universal-markdown-editor' ) },
-	{ action: 'code', label: __( 'Inline code', 'universal-markdown-editor' ) },
-	{
-		action: 'codeBlock',
-		label: __( 'Code block', 'universal-markdown-editor' ),
-	},
-	{ action: 'table', label: __( 'Table', 'universal-markdown-editor' ) },
+const TOOLBAR_GROUPS = [
+	[
+		{
+			action: 'heading',
+			icon: 'heading',
+			label: __( 'Heading', 'universal-markdown-editor' ),
+		},
+		{
+			action: 'bold',
+			icon: 'bold',
+			label: __( 'Bold', 'universal-markdown-editor' ),
+		},
+		{
+			action: 'italic',
+			icon: 'italic',
+			label: __( 'Italic', 'universal-markdown-editor' ),
+		},
+		{
+			action: 'strikethrough',
+			icon: 'strikethrough',
+			label: __( 'Strikethrough', 'universal-markdown-editor' ),
+		},
+	],
+	[
+		{
+			action: 'quote',
+			icon: 'quote',
+			label: __( 'Blockquote', 'universal-markdown-editor' ),
+		},
+		{
+			action: 'unorderedList',
+			icon: 'unorderedList',
+			label: __( 'Bulleted list', 'universal-markdown-editor' ),
+		},
+		{
+			action: 'orderedList',
+			icon: 'orderedList',
+			label: __( 'Numbered list', 'universal-markdown-editor' ),
+		},
+	],
+	[
+		{
+			action: 'code',
+			icon: 'code',
+			label: __( 'Inline code', 'universal-markdown-editor' ),
+		},
+		{
+			action: 'codeBlock',
+			icon: 'codeBlock',
+			label: __( 'Code block', 'universal-markdown-editor' ),
+		},
+		{
+			action: 'table',
+			icon: 'table',
+			label: __( 'Table', 'universal-markdown-editor' ),
+		},
+	],
 ];
+
+function ToolbarGlyph( { name } ) {
+	const paths = {
+		bold: 'M6.8 4h5.5c3 0 4.9 1.5 4.9 4 0 1.7-.9 3-2.4 3.5 1.9.5 3.1 2 3.1 4 0 2.8-2.1 4.5-5.3 4.5H6.8V4zm3 3.1v3.7h2.2c1.5 0 2.4-.7 2.4-1.9s-.8-1.8-2.4-1.8h-2.2zm0 6.6v4.1h2.5c1.7 0 2.7-.7 2.7-2.1 0-1.3-1-2-2.7-2h-2.5z',
+		code: 'M8.6 7.4 3.9 12l4.7 4.6 1.4-1.4L6.7 12 10 8.8 8.6 7.4zm6.8 0-1.4 1.4 3.3 3.2-3.3 3.2 1.4 1.4 4.7-4.6-4.7-4.6z',
+		codeBlock:
+			'M4 3h16v18H4V3zm2 2v14h12V5H6zm2.2 3.3L6.8 9.7l1.4 1.4L9 10.4 7.8 9.2l1.2-1.1-1.4-1.4zm8.4 0-1.4 1.4 1.2 1.1-1.2 1.2 1.4 1.4 2.6-2.6-2.6-2.5zM8.5 14h7v1.8h-7V14z',
+		heading: 'M5 4h3v6.4h8V4h3v16h-3v-6.8H8V20H5V4z',
+		image: 'M4 5h16v14H4V5zm2 2v8.2l3.6-3.6 2.8 2.8 2.4-2.4 3.2 3.2V7H6zm8 1.3a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8z',
+		italic: 'M9.2 4H17v2.2h-2.5l-3.4 11.6H14V20H6.2v-2.2h2.5l3.4-11.6H9.2V4z',
+		link: 'M9.8 7.4 8.4 8.8l-2 2a2 2 0 1 0 2.8 2.8l2-2 1.4 1.4-2 2a4 4 0 0 1-5.6-5.6l2-2 1.8-.4zm4.4 9.2 1.4-1.4 2-2a2 2 0 1 0-2.8-2.8l-2 2-1.4-1.4 2-2a4 4 0 0 1 5.6 5.6l-2 2-1.8.4-.1-.4z',
+		orderedList:
+			'M4 5h2v2H4V5zm0 4h2v2H4V9zm0 4h2v2H4v-2zm0 4h2v2H4v-2zM9 6h11v2H9V6zm0 4h11v2H9v-2zm0 4h11v2H9v-2zm0 4h11v2H9v-2z',
+		quote: 'M5 6h9v5H8.8c0 1.3.8 2 2.2 2.2V16c-3.6-.1-5.4-2.1-5.4-5.6V6H5zm9 0h5v5h-2.7c0 1.3.8 2 2.2 2.2V16c-3.6-.1-5.4-2.1-5.4-5.6V6h.9z',
+		strikethrough:
+			'M5 11h14v2H5v-2zm3.2-2.6c0-2.1 1.6-3.5 4.2-3.5 2.1 0 3.8.8 4.7 2.3l-1.8 1.1c-.6-.9-1.6-1.4-2.9-1.4-1.4 0-2.2.5-2.2 1.4 0 .8.7 1.1 2 1.4l1.2.3c2.7.6 4 1.8 4 3.8 0 2.4-1.9 4-4.9 4-2.5 0-4.4-.9-5.5-2.7l1.9-1.2c.8 1.3 2 1.9 3.6 1.9 1.6 0 2.6-.6 2.6-1.7 0-.9-.7-1.4-2.2-1.7l-1.3-.3c-2.5-.6-3.4-1.7-3.4-3.7z',
+		table: 'M4 5h16v14H4V5zm2 2v2h3V7H6zm5 0v2h3V7h-3zm5 0v2h2V7h-2zM6 11v2h3v-2H6zm5 0v2h3v-2h-3zm5 0v2h2v-2h-2zM6 15v2h3v-2H6zm5 0v2h3v-2h-3zm5 0v2h2v-2h-2z',
+		unorderedList:
+			'M5 6.5A1.5 1.5 0 1 0 5 9.5a1.5 1.5 0 0 0 0-3zm0 5A1.5 1.5 0 1 0 5 14.5a1.5 1.5 0 0 0 0-3zm0 5A1.5 1.5 0 1 0 5 19.5a1.5 1.5 0 0 0 0-3zM9 6h11v2H9V6zm0 5h11v2H9v-2zm0 5h11v2H9v-2z',
+	};
+
+	return (
+		<svg
+			aria-hidden="true"
+			className="ume-toolbar-glyph"
+			focusable="false"
+			viewBox="0 0 24 24"
+		>
+			<path d={ paths[ name ] } />
+		</svg>
+	);
+}
 
 function PreviewFrame( { html } ) {
 	const document = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font:16px/1.65 system-ui,sans-serif;color:#202124;margin:20px;overflow-wrap:anywhere}img{max-width:100%;height:auto}pre{overflow:auto;padding:12px;background:#f3f4f5}table{border-collapse:collapse}th,td{border:1px solid #d0d4d8;padding:6px 10px;text-align:left}blockquote{border-left:3px solid #9aa0a6;margin-left:0;padding-left:14px;color:#5f6368}</style></head><body>${ html }</body></html>`;
@@ -98,6 +164,7 @@ function MarkdownWorkspace( { postId, initialContent, onClose } ) {
 	const [ selection, setSelection ] = useState( { start: 0, end: 0 } );
 	const textareaRef = useRef( null );
 	const previewRequest = useMemo( () => createPreviewRequest(), [] );
+	const previewSync = useMemo( () => createPreviewSync(), [] );
 	const editorDispatch = useDispatch( 'core/editor' );
 	const dirty =
 		Boolean( session ) &&
@@ -174,6 +241,7 @@ function MarkdownWorkspace( { postId, initialContent, onClose } ) {
 			return undefined;
 		}
 
+		previewSync.cancel();
 		previewRequest.cancel();
 		setPreviewError( '' );
 		if ( source === '' ) {
@@ -183,14 +251,14 @@ function MarkdownWorkspace( { postId, initialContent, onClose } ) {
 		}
 
 		setPreviewState( 'loading' );
-		const timer = window.setTimeout( () => {
+		previewSync.schedule( source, ( value ) => {
 			previewRequest.run(
-				source,
-				( value, { signal } ) =>
+				value,
+				( nextSource, { signal } ) =>
 					apiFetch( {
 						path: `/ume/v1/posts/${ postId }/markdown/preview`,
 						method: 'POST',
-						data: { source: value },
+						data: { source: nextSource },
 						signal,
 					} ),
 				( result ) => {
@@ -208,13 +276,13 @@ function MarkdownWorkspace( { postId, initialContent, onClose } ) {
 					setPreviewState( 'error' );
 				}
 			);
-		}, PREVIEW_DEBOUNCE_MS );
+		} );
 
 		return () => {
-			window.clearTimeout( timer );
+			previewSync.cancel();
 			previewRequest.cancel();
 		};
-	}, [ postId, previewRequest, prompt, source ] );
+	}, [ postId, previewRequest, previewSync, prompt, source ] );
 
 	useEffect( () => {
 		if ( ! dirty ) {
@@ -573,92 +641,7 @@ function MarkdownWorkspace( { postId, initialContent, onClose } ) {
 				className="ume-workspace-modal"
 			>
 				<div className="ume-workspace">
-					<div
-						className="ume-format-toolbar"
-						role="toolbar"
-						aria-label={ __(
-							'Markdown formatting',
-							'universal-markdown-editor'
-						) }
-					>
-						{ TOOLBAR_ACTIONS.map( ( { action, label } ) => (
-							<Button
-								key={ action }
-								variant="tertiary"
-								title={ label }
-								aria-label={ label }
-								disabled={ prompt !== '' || isSaving }
-								onMouseDown={ ( event ) =>
-									event.preventDefault()
-								}
-								onClick={ () => runToolbarAction( action ) }
-							>
-								{ label }
-							</Button>
-						) ) }
-						<Button
-							variant="tertiary"
-							title={ __(
-								'Insert link',
-								'universal-markdown-editor'
-							) }
-							aria-label={ __(
-								'Insert link',
-								'universal-markdown-editor'
-							) }
-							disabled={ prompt !== '' || isSaving }
-							onMouseDown={ ( event ) => event.preventDefault() }
-							onClick={ openLinkDialog }
-						>
-							{ __( 'Link', 'universal-markdown-editor' ) }
-						</Button>
-						<Button
-							variant="tertiary"
-							title={ __(
-								'Insert image',
-								'universal-markdown-editor'
-							) }
-							aria-label={ __(
-								'Insert image',
-								'universal-markdown-editor'
-							) }
-							aria-describedby={
-								! window.umeSettings.canUploadMedia
-									? 'ume-media-permission-note'
-									: undefined
-							}
-							disabled={
-								prompt !== '' ||
-								isSaving ||
-								! window.umeSettings.canUploadMedia
-							}
-							onMouseDown={ ( event ) => event.preventDefault() }
-							onClick={ openMediaLibrary }
-						>
-							{ __( 'Image', 'universal-markdown-editor' ) }
-						</Button>
-						{ ! window.umeSettings.canUploadMedia && (
-							<span
-								id="ume-media-permission-note"
-								className="ume-toolbar-help"
-							>
-								{ __(
-									'Media access requires the WordPress upload_files capability.',
-									'universal-markdown-editor'
-								) }
-							</span>
-						) }
-					</div>
-					{ mediaError && (
-						<Notice
-							status="error"
-							isDismissible
-							onRemove={ () => setMediaError( '' ) }
-						>
-							{ mediaError }
-						</Notice>
-					) }
-					<div className="ume-workspace-toolbar">
+					<div className="ume-workspace-header">
 						<div
 							className="ume-mobile-tabs"
 							role="tablist"
@@ -682,48 +665,117 @@ function MarkdownWorkspace( { postId, initialContent, onClose } ) {
 								{ __( 'Preview', 'universal-markdown-editor' ) }
 							</Button>
 						</div>
-						<span
-							className="ume-preview-status"
-							role="status"
-							aria-live="polite"
-						>
-							{ previewState === 'loading' && (
-								<>
-									<Spinner />
-									{ __(
-										'Updating preview…',
-										'universal-markdown-editor'
-									) }
-								</>
-							) }
-							{ previewState === 'ready' &&
-								__(
-									'Preview updated',
-									'universal-markdown-editor'
-								) }
-						</span>
-						<Button variant="secondary" onClick={ requestClose }>
-							{ __(
-								'Exit Markdown mode',
+						<div
+							className="ume-format-toolbar"
+							role="toolbar"
+							aria-label={ __(
+								'Markdown formatting',
 								'universal-markdown-editor'
 							) }
-						</Button>
-						<Button
-							variant="primary"
-							onClick={ saveMarkdown }
-							disabled={
-								isSaving ||
-								( session.managed && source === baseline )
-							}
 						>
-							{ isSaving
-								? __( 'Saving…', 'universal-markdown-editor' )
-								: __(
-										'Save Markdown',
+							{ TOOLBAR_GROUPS.map( ( group ) => (
+								<div
+									className="ume-format-toolbar__group"
+									key={ group
+										.map( ( { action } ) => action )
+										.join( '-' ) }
+								>
+									{ group.map(
+										( { action, icon, label } ) => (
+											<Button
+												className="ume-toolbar-button"
+												icon={
+													<ToolbarGlyph
+														name={ icon }
+													/>
+												}
+												key={ action }
+												label={ label }
+												title={ label }
+												variant="tertiary"
+												disabled={
+													prompt !== '' || isSaving
+												}
+												onMouseDown={ ( event ) =>
+													event.preventDefault()
+												}
+												onClick={ () =>
+													runToolbarAction( action )
+												}
+											/>
+										)
+									) }
+								</div>
+							) ) }
+							<div className="ume-format-toolbar__group">
+								<Button
+									className="ume-toolbar-button"
+									icon={ <ToolbarGlyph name="link" /> }
+									label={ __(
+										'Insert link',
 										'universal-markdown-editor'
 									) }
-						</Button>
+									title={ __(
+										'Insert link',
+										'universal-markdown-editor'
+									) }
+									variant="tertiary"
+									disabled={ prompt !== '' || isSaving }
+									onMouseDown={ ( event ) =>
+										event.preventDefault()
+									}
+									onClick={ openLinkDialog }
+								/>
+								<Button
+									className="ume-toolbar-button"
+									icon={ <ToolbarGlyph name="image" /> }
+									label={ __(
+										'Insert image',
+										'universal-markdown-editor'
+									) }
+									title={ __(
+										'Insert image',
+										'universal-markdown-editor'
+									) }
+									aria-describedby={
+										! window.umeSettings.canUploadMedia
+											? 'ume-media-permission-note'
+											: undefined
+									}
+									variant="tertiary"
+									disabled={
+										prompt !== '' ||
+										isSaving ||
+										! window.umeSettings.canUploadMedia
+									}
+									onMouseDown={ ( event ) =>
+										event.preventDefault()
+									}
+									onClick={ openMediaLibrary }
+								/>
+							</div>
+							{ ! window.umeSettings.canUploadMedia && (
+								<span
+									id="ume-media-permission-note"
+									className="ume-toolbar-help"
+								>
+									{ __(
+										'Media access requires the WordPress upload_files capability.',
+										'universal-markdown-editor'
+									) }
+								</span>
+							) }
+						</div>
 					</div>
+					{ mediaError && (
+						<Notice
+							status="error"
+							isDismissible
+							onRemove={ () => setMediaError( '' ) }
+						>
+							{ mediaError }
+						</Notice>
+					) }
 					{ saveUnavailableNotice }
 					{ saveError && (
 						<Notice status="error" isDismissible={ false }>
@@ -769,12 +821,14 @@ function MarkdownWorkspace( { postId, initialContent, onClose } ) {
 								'universal-markdown-editor'
 							) }
 						>
-							<label htmlFor="ume-markdown-source">
-								{ __(
-									'Markdown source',
-									'universal-markdown-editor'
-								) }
-							</label>
+							<div className="ume-panel-heading">
+								<label htmlFor="ume-markdown-source">
+									{ __(
+										'Markdown source',
+										'universal-markdown-editor'
+									) }
+								</label>
+							</div>
 							<textarea
 								id="ume-markdown-source"
 								ref={ textareaRef }
@@ -802,8 +856,67 @@ function MarkdownWorkspace( { postId, initialContent, onClose } ) {
 								'universal-markdown-editor'
 							) }
 						>
+							<div className="ume-panel-heading">
+								<span>
+									{ __(
+										'Rendered preview',
+										'universal-markdown-editor'
+									) }
+								</span>
+							</div>
 							<PreviewFrame html={ html } />
 						</section>
+					</div>
+					<div className="ume-workspace-actions">
+						<span
+							className="ume-preview-status"
+							role="status"
+							aria-live="polite"
+						>
+							{ previewState === 'loading' && (
+								<>
+									<Spinner />
+									{ __(
+										'Updating preview…',
+										'universal-markdown-editor'
+									) }
+								</>
+							) }
+							{ previewState === 'ready' &&
+								__(
+									'Preview updated',
+									'universal-markdown-editor'
+								) }
+						</span>
+						<div className="ume-workspace-actions__buttons">
+							<Button
+								variant="secondary"
+								onClick={ requestClose }
+							>
+								{ __(
+									'Exit Markdown mode',
+									'universal-markdown-editor'
+								) }
+							</Button>
+							<Button
+								variant="primary"
+								onClick={ saveMarkdown }
+								disabled={
+									isSaving ||
+									( session.managed && source === baseline )
+								}
+							>
+								{ isSaving
+									? __(
+											'Saving…',
+											'universal-markdown-editor'
+										)
+									: __(
+											'Save Markdown',
+											'universal-markdown-editor'
+										) }
+							</Button>
+						</div>
 					</div>
 				</div>
 			</Modal>
