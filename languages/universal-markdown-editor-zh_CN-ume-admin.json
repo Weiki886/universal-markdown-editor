@@ -1,0 +1,183 @@
+{
+  "translation-revision-date": "2026-11-10 15:30+0800",
+  "generator": "WP-CLI/2.12.0",
+  "source": "src/index.js",
+  "domain": "universal-markdown-editor",
+  "locale_data": {
+    "universal-markdown-editor": {
+      "": {
+        "domain": "universal-markdown-editor",
+        "lang": "zh_CN",
+        "plural-forms": "nplurals=1; plural=0;"
+      },
+      "Bold": [
+        "加粗"
+      ],
+      "Italic": [
+        "斜体"
+      ],
+      "Strikethrough": [
+        "删除线"
+      ],
+      "Heading": [
+        "标题"
+      ],
+      "Bulleted list": [
+        "项目符号列表"
+      ],
+      "Numbered list": [
+        "编号列表"
+      ],
+      "Blockquote": [
+        "引用"
+      ],
+      "Inline code": [
+        "行内代码"
+      ],
+      "Code block": [
+        "代码块"
+      ],
+      "Table": [
+        "表格"
+      ],
+      "Markdown preview": [
+        "Markdown 预览"
+      ],
+      "Could not load the Markdown session.": [
+        "无法加载 Markdown 会话。"
+      ],
+      "Preview is unavailable.": [
+        "预览不可用。"
+      ],
+      "Enter a safe HTTP, HTTPS, mail, telephone, or relative URL.": [
+        "请输入安全的 HTTP、HTTPS、邮件、电话或相对 URL。"
+      ],
+      "Your account does not have permission to upload or select media.": [
+        "你的账户无权上传或选择媒体。"
+      ],
+      "The WordPress media library is unavailable. Reload the editor and try again.": [
+        "WordPress 媒体库不可用。请重新加载编辑器后重试。"
+      ],
+      "Select or upload an image": [
+        "选择或上传图片"
+      ],
+      "Insert image": [
+        "插入图片"
+      ],
+      "The selected media did not provide a safe, permanent image URL.": [
+        "所选媒体未提供安全、永久的图片 URL。"
+      ],
+      "The media library could not be opened.": [
+        "无法打开媒体库。"
+      ],
+      "Markdown could not be saved.": [
+        "Markdown 无法保存。"
+      ],
+      "WordPress revisions are disabled for this post type. Markdown can still be saved, but historical recovery is limited.": [
+        "此文章类型已禁用 WordPress 修订版本。Markdown 仍可保存，但历史恢复能力有限。"
+      ],
+      "Markdown editor": [
+        "Markdown 编辑器"
+      ],
+      "Close": [
+        "关闭"
+      ],
+      "This post contains WordPress blocks, HTML, or shortcodes. It cannot be converted losslessly. The original content will remain unchanged.": [
+        "此文章包含 WordPress 区块、HTML 或短代码，无法无损转换。原始内容将保持不变。"
+      ],
+      "Cancel": [
+        "取消"
+      ],
+      "Start with empty Markdown": [
+        "以空白 Markdown 开始"
+      ],
+      "Import this post's plain text as Markdown? No post content will be changed by opening or previewing it.": [
+        "将此文章的纯文本作为 Markdown 导入？打开或预览不会更改任何文章内容。"
+      ],
+      "Start empty": [
+        "从空白开始"
+      ],
+      "Import current content": [
+        "导入当前内容"
+      ],
+      "Markdown formatting": [
+        "Markdown 格式"
+      ],
+      "Insert link": [
+        "插入链接"
+      ],
+      "Link": [
+        "链接"
+      ],
+      "Image": [
+        "图片"
+      ],
+      "Media access requires the WordPress upload_files capability.": [
+        "插入媒体需要 WordPress 的 upload_files 权限。"
+      ],
+      "Editor view": [
+        "编辑器视图"
+      ],
+      "Source": [
+        "源内容"
+      ],
+      "Preview": [
+        "预览"
+      ],
+      "Updating preview…": [
+        "正在更新预览…"
+      ],
+      "Preview updated": [
+        "预览已更新"
+      ],
+      "Exit Markdown mode": [
+        "退出 Markdown 模式"
+      ],
+      "Saving…": [
+        "正在保存…"
+      ],
+      "Save Markdown": [
+        "保存 Markdown"
+      ],
+      "Download Markdown": [
+        "下载 Markdown"
+      ],
+      "Reload post": [
+        "重新加载文章"
+      ],
+      "Markdown source": [
+        "Markdown 源"
+      ],
+      "Rendered preview": [
+        "渲染预览"
+      ],
+      "Text": [
+        "文本"
+      ],
+      "URL": [
+        "URL"
+      ],
+      "Discard this Markdown session?": [
+        "放弃此 Markdown 会话？"
+      ],
+      "These edits are not saved. The original Gutenberg content remains unchanged, but this Markdown session will be discarded.": [
+        "这些编辑尚未保存。原始 Gutenberg 内容保持不变，但此 Markdown 会话将被丢弃。"
+      ],
+      "Keep editing": [
+        "继续编辑"
+      ],
+      "Discard session": [
+        "放弃会话"
+      ],
+      "Save your Gutenberg changes before opening Markdown mode.": [
+        "打开 Markdown 模式前请先保存 Gutenberg 更改。"
+      ],
+      "Save the post in Gutenberg before opening Markdown mode.": [
+        "打开 Markdown 模式前请先在 Gutenberg 中保存文章。"
+      ],
+      "Open Markdown workspace": [
+        "打开 Markdown 工作区"
+      ]
+    }
+  }
+}

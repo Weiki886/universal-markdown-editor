@@ -38,6 +38,12 @@ final class Assets
             true
         );
 
+        wp_set_script_translations(
+            self::HANDLE,
+            'universal-markdown-editor',
+            UME_DIR . 'languages'
+        );
+
         wp_enqueue_style(
             self::HANDLE,
             $baseUrl . 'index.css',

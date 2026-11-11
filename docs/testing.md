@@ -20,8 +20,52 @@ npm run check:dependencies
 `npm run test:integration` uses the pinned `wp-env` installation and requires
 Docker. It verifies plugin activation, Markdown conversion and sanitization,
 REST permissions, post storage, revisions, conflict handling, failed-save
-recovery, and media capability wiring. Do not describe a run that did not use
-WordPress as an integration test.
+recovery, media capability wiring, and bundled PHP and JavaScript localization
+for `en_US` and `zh_CN`. Do not describe a run that did not use WordPress as an
+integration test.
+
+## Translation Regeneration
+
+The repository ships `universal-markdown-editor.pot`,
+`universal-markdown-editor-zh_CN.po`,
+`universal-markdown-editor-zh_CN.mo`, and
+`universal-markdown-editor-zh_CN-ume-admin.json`. English remains the source
+language. The integration suite asserts that the POT includes PHP and
+JavaScript source strings, that `zh_CN` PHP translations load, that
+user-visible REST errors use the plugin text domain, and that the
+`ume-admin` script receives Chinese Jed data.
+
+After changing user-visible PHP or JavaScript strings, regenerate the
+translation files from the repository root:
+
+```sh
+PLUGIN_DIR=wp-content/plugins/universal-markdown-editor-for-wordpress
+
+npx wp-env run cli wp i18n make-pot \
+  "$PLUGIN_DIR" \
+  "$PLUGIN_DIR/languages/universal-markdown-editor.pot" \
+  --domain=universal-markdown-editor \
+  --slug=universal-markdown-editor \
+  --exclude=node_modules,vendor,dist,tests
+
+npx wp-env run cli wp i18n make-mo "$PLUGIN_DIR/languages"
+
+npx wp-env run cli wp i18n make-json \
+  "$PLUGIN_DIR/languages/universal-markdown-editor-zh_CN.po" \
+  "$PLUGIN_DIR/languages" \
+  --domain=universal-markdown-editor \
+  --pretty-print
+```
+
+Update the `zh_CN` PO translations before compiling. WP-CLI names generated
+JavaScript JSON files from the source path and may use a `messages` domain.
+This project packages the supported stable handle file instead:
+`universal-markdown-editor-zh_CN-ume-admin.json`. Normalize the generated JSON
+to that filename and use `universal-markdown-editor` for both the top-level
+`domain` and `locale_data` keys. Remove superseded generated JSON files, rerun
+`npm run test:integration`, and confirm both English and Simplified Chinese
+states. Do not commit incomplete or empty translation artifacts; the release
+build rejects them.
 
 The CI workflow also builds the installable development package, scans tracked
 and non-ignored source files with a pinned Gitleaks CLI, audits locked runtime

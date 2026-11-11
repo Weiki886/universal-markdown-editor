@@ -8,6 +8,7 @@
  * License: GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: universal-markdown-editor
+ * Domain Path: /languages
  */
 
 declare(strict_types=1);
@@ -55,7 +56,8 @@ if (!defined('UME_MINIMUM_WORDPRESS')) {
     if (!$supported) {
         $showCompatibilityNotice(
             sprintf(
-                'Universal Markdown Editor requires PHP %s or later and WordPress %s or later.',
+                /* translators: 1: minimum PHP version, 2: minimum WordPress version. */
+                __('Universal Markdown Editor requires PHP %1$s or later and WordPress %2$s or later.', 'universal-markdown-editor'),
                 UME_MINIMUM_PHP,
                 UME_MINIMUM_WORDPRESS
             )
@@ -74,7 +76,7 @@ if (!defined('UME_MINIMUM_WORDPRESS')) {
 
     if (!is_file($autoloader)) {
         $showCompatibilityNotice(
-            'Universal Markdown Editor dependencies are missing. Run composer install from the plugin directory.'
+            __('Universal Markdown Editor dependencies are missing. Run composer install from the plugin directory.', 'universal-markdown-editor')
         );
 
         return;

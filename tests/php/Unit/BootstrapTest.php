@@ -72,7 +72,8 @@ final class BootstrapTest extends TestCase
             . 'function add_action($hook, $callback, $priority = 10, $acceptedArgs = 1) {'
             . '$GLOBALS["ume_test_actions"][] = [$hook, $callback];'
             . '}'
-            . 'function esc_html($text) { return htmlspecialchars($text, ENT_QUOTES, "UTF-8"); }';
+            . 'function esc_html($text) { return htmlspecialchars($text, ENT_QUOTES, "UTF-8"); }'
+            . 'function __($text) { return $text; }';
     }
 
     private function entrypointRequire(string $entrypoint): string

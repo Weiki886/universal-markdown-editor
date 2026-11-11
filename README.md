@@ -61,6 +61,21 @@ Useful commands:
 scopes their namespaces with the `UME_Vendor` prefix, regenerates the autoloader,
 and verifies the isolated runtime on PHP 8.1.
 
+## Localization
+
+English is the source language. The plugin bundles Simplified Chinese
+translations for PHP-generated messages and the Markdown editor interface.
+Translations follow the WordPress site language at **Settings → General → Site
+Language**; there is no separate plugin language selector. A `zh_CN` site uses
+the bundled Chinese files, while `en_US` keeps the English source strings.
+
+Translation sources live in `languages/`. After changing a user-visible PHP or
+JavaScript string, regenerate the POT file, update the `zh_CN` PO file, compile
+the MO file, and regenerate the `ume-admin` JSON translations. Keep the stable
+`universal-markdown-editor-zh_CN-ume-admin.json` filename and use
+`universal-markdown-editor` as the JSON text domain. The release build fails if
+any required translation artifact is missing or empty.
+
 ## Install a Development Build
 
 This project has not published an official release. For evaluation only, a

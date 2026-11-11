@@ -24,6 +24,7 @@ Write WordPress posts in Markdown from the Gutenberg editor. Review a server-ren
 * Store Markdown source separately from the standard HTML in post_content.
 * Keep saved HTML readable after the plugin is deactivated.
 * Check editing permissions and sanitize converted HTML on the server.
+* Follow the WordPress site language with bundled English and Simplified Chinese translations.
 
 This pre-release plugin is intended for the Gutenberg post editor. It does not support the Classic Editor, arbitrary Gutenberg block conversion, or theme-specific shortcodes. Review the known limitations and testing status before using it on a site.
 

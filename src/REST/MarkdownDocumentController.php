@@ -77,7 +77,7 @@ final class MarkdownDocumentController
     {
         return new WP_Error(
             'ume_invalid_source',
-            'The request must contain a Markdown source string and a valid editing baseline.',
+            __('The request must contain a Markdown source string and a valid editing baseline.', 'universal-markdown-editor'),
             ['status' => 400]
         );
     }
