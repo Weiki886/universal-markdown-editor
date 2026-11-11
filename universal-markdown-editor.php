@@ -54,14 +54,6 @@ if (!defined('UME_MINIMUM_WORDPRESS')) {
         && version_compare($wordpressVersion, UME_MINIMUM_WORDPRESS, '>=');
 
     if (!$supported) {
-        if (function_exists('load_plugin_textdomain') && function_exists('plugin_basename')) {
-            load_plugin_textdomain(
-                'universal-markdown-editor',
-                false,
-                dirname(plugin_basename(__FILE__)) . '/languages'
-            );
-        }
-
         $showCompatibilityNotice(
             sprintf(
                 /* translators: 1: minimum PHP version, 2: minimum WordPress version. */
@@ -75,10 +67,6 @@ if (!defined('UME_MINIMUM_WORDPRESS')) {
     }
 
     require_once UME_DIR . 'src/autoload.php';
-
-    if (class_exists(Languages::class)) {
-        Languages::load();
-    }
 
     $autoloader = UME_DIR . 'build/vendor/autoload.php';
 

@@ -51,17 +51,17 @@ $check(
     __($sourceMessage, $domain) === $sourceMessage,
     'The English source message did not remain unchanged before switching locales.'
 );
-$check(
-    class_exists(\UniversalMarkdownEditor\Languages::class),
-    'The localization runtime component did not load.'
-);
 $useSimplifiedChinese = static fn (): string => 'zh_CN';
 add_filter('pre_determine_locale', $useSimplifiedChinese);
 unload_textdomain($domain, true);
 
-if (class_exists(\UniversalMarkdownEditor\Languages::class)) {
-    \UniversalMarkdownEditor\Languages::load();
-}
+$check(
+    load_textdomain(
+        $domain,
+        $languagesDirectory . '/universal-markdown-editor-zh_CN.mo'
+    ),
+    'The bundled PHP translation file could not be loaded.'
+);
 
 $check(
     __($sourceMessage, $domain) === $translatedMessage,

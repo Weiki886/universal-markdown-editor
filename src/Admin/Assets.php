@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace UniversalMarkdownEditor\Admin;
 
-use UniversalMarkdownEditor\Languages;
-
 final class Assets
 {
     private const HANDLE = 'ume-admin';
@@ -42,7 +40,7 @@ final class Assets
 
         wp_set_script_translations(
             self::HANDLE,
-            Languages::DOMAIN,
+            'universal-markdown-editor',
             UME_DIR . 'languages'
         );
 
