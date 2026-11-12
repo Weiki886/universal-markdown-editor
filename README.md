@@ -95,10 +95,14 @@ does not replace WordPress integration, theme, browser, or upgrade verification.
 
 ## Editing and Existing Posts
 
-The plugin adds a Markdown workspace to the Gutenberg post editor; it does not
-replace the editor for every post type and does not support the Classic Editor.
-Use the Markdown editor for posts, review the server-rendered preview, then save.
-The front end continues to use standard HTML stored in `post_content`.
+The plugin adds Markdown mode to the Gutenberg post editor; it does not replace
+the editor for every post type and does not support the Classic Editor. On
+supported WordPress editor layouts, Markdown mode replaces only the central
+canvas so the WordPress header and document sidebar stay visible. If a safe
+canvas host cannot be detected, the plugin falls back to the previous
+full-screen workspace. Use Markdown mode for posts, review the server-rendered
+preview, then save. The front end continues to use standard HTML stored in
+`post_content`.
 
 Opening an unmanaged post does not change it. For plain text content, the editor
 asks whether to import the current text as Markdown, start empty, or cancel. For
@@ -142,6 +146,7 @@ fixtures, or test environments.
 
 - [Architecture and data contracts](docs/architecture.md)
 - [ADR 0001: Markdown workspace and dual storage](docs/adr/0001-markdown-editor-and-storage.md)
+- [ADR 0003: Inline Markdown canvas mode](docs/adr/0003-inline-markdown-canvas-mode.md)
 - [Dependency and license inventory](docs/dependency-licenses.md)
 - [Engineering rules](AGENTS.md)
 

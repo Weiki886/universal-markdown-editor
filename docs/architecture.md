@@ -234,6 +234,8 @@ saved_source_hash == hash("sha256", markdown_source)
 
 使用 `registerPlugin`、`PluginSidebar`/`PluginSidebarMoreMenuItem` 提供入口，点击后打开全屏 `Modal`。不替换 Gutenberg store，不修改区块定界符，不将普通文章自动转成插件区块。
 
+> 2026-11-12 增量更新：ADR 0003 将主编辑体验改为同页内嵌模式。插件入口仍使用 `registerPlugin` 和侧栏；检测到受支持的 Gutenberg 内容宿主时，通过 `createPortal` 将现有 Markdown 工作区挂载到中央内容区域，保留 WordPress 顶栏和文档侧栏。宿主无法安全解析时回退到本段原先的全屏 `Modal`。REST、私有 meta、Markdown 转换、保存、revision、权限和冲突契约不变，也不引入自定义区块或双向同步。
+
 打开前置条件：编辑器已加载、当前为 post、用户可编辑、Gutenberg 没有未保存改动。若已有标题、区块或设置未保存，先引导用户使用原生保存，避免成功后的刷新丢失这些改动。
 
 工作区打开期间使用公开的 `core/editor` `lockPostSaving` 和 `lockPostAutosaving`，并配对本插件 lock key；无论成功、失败、关闭或异常都释放自己的锁，不能解除其他插件的锁。保存成功并清理本地 dirty 状态后刷新编辑页，以服务端内容重新初始化 Gutenberg，避免手工维护一套块状态同步逻辑。
