@@ -182,6 +182,12 @@ verify in a clean disposable WordPress installation:
   post is unchanged, then test import on a separate fixture.
 - Open a block/HTML/shortcode post; confirm the lossless-conversion warning,
   cancel, and verify the original remains unchanged.
+- Open Markdown mode on a supported Gutenberg editor layout; confirm the
+  WordPress header and document sidebar remain visible, the Markdown surface
+  replaces only the central canvas, live preview works, and exiting restores
+  the block canvas.
+- Test the compatibility path without a supported inline host and confirm the
+  full-screen workspace fallback remains usable.
 - Test an unauthorized account and an account without `upload_files`; verify
   preview/save and media controls are denied as appropriate.
 - View a saved post in the current default WordPress theme and at least one

@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refine the Markdown workspace with a compact icon toolbar, full-height
   aligned source and preview panels, internal scrolling, automatic preview
   updates, and persistent save and exit actions below the editing surface.
+- Render Markdown mode inside the Gutenberg content region when a compatible
+  editor host is available, with the full-screen workspace retained as a
+  fallback.
 
 ### Added
 
