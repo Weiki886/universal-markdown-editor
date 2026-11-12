@@ -26,6 +26,7 @@ import { __ } from '@wordpress/i18n';
 /* eslint-enable import/no-unresolved, import/no-extraneous-dependencies */
 import { createPreviewRequest } from './Editor/preview-request';
 import { createPreviewSync } from './Editor/preview-sync';
+import MarkdownBrandIcon from './Editor/markdown-brand-icon';
 import {
 	activateInlineWorkspaceHost,
 	findInlineWorkspaceHost,
@@ -1112,6 +1113,7 @@ function MarkdownEditorPlugin() {
 	return (
 		<>
 			<PluginSidebar
+				icon={ <MarkdownBrandIcon /> }
 				name="ume-markdown-sidebar"
 				title={ __( 'Markdown editor', 'universal-markdown-editor' ) }
 			>
