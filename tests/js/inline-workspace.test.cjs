@@ -24,6 +24,19 @@ test('finds the Gutenberg content host before the visual editor fallback', () =>
 	assert.equal(findInlineWorkspaceHost(documentNode), contentHost);
 });
 
+test('uses the visual editor host when the content wrapper is unavailable', () => {
+	const visualEditor = { id: 'visual' };
+	const documentNode = {
+		querySelector(selector) {
+			return selector === '.editor-visual-editor'
+				? visualEditor
+				: null;
+		},
+	};
+
+	assert.equal(findInlineWorkspaceHost(documentNode), visualEditor);
+});
+
 test('returns null when no supported editor host exists', () => {
 	assert.equal(
 		findInlineWorkspaceHost({

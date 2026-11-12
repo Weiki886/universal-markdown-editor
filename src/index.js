@@ -12,8 +12,10 @@ import {
 } from '@wordpress/components';
 import { useDispatch, useSelect } from '@wordpress/data';
 import {
+	createPortal,
 	useCallback,
 	useEffect,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState,
@@ -24,6 +26,10 @@ import { __ } from '@wordpress/i18n';
 /* eslint-enable import/no-unresolved, import/no-extraneous-dependencies */
 import { createPreviewRequest } from './Editor/preview-request';
 import { createPreviewSync } from './Editor/preview-sync';
+import {
+	activateInlineWorkspaceHost,
+	findInlineWorkspaceHost,
+} from './Editor/inline-workspace';
 import {
 	applyMarkdownAction,
 	buildMarkdownImage,
@@ -141,7 +147,65 @@ function PreviewFrame( { html } ) {
 	);
 }
 
-function MarkdownWorkspace( { postId, initialContent, onClose } ) {
+function WorkspaceSurface( { inlineHost, onRequestClose, children } ) {
+	useLayoutEffect( () => {
+		if ( ! inlineHost ) {
+			return undefined;
+		}
+
+		return activateInlineWorkspaceHost( inlineHost );
+	}, [ inlineHost ] );
+
+	useEffect( () => {
+		if ( ! inlineHost ) {
+			return undefined;
+		}
+
+		const closeOnEscape = ( event ) => {
+			if (
+				event.key !== 'Escape' ||
+				window.document.querySelector(
+					'.components-modal__frame, .media-modal'
+				)
+			) {
+				return;
+			}
+			onRequestClose();
+		};
+
+		window.document.addEventListener( 'keydown', closeOnEscape );
+		return () =>
+			window.document.removeEventListener( 'keydown', closeOnEscape );
+	}, [ inlineHost, onRequestClose ] );
+
+	if ( inlineHost ) {
+		return createPortal(
+			<section
+				aria-label={ __(
+					'Markdown editor',
+					'universal-markdown-editor'
+				) }
+				className="ume-inline-workspace"
+			>
+				{ children }
+			</section>,
+			inlineHost
+		);
+	}
+
+	return (
+		<Modal
+			title={ __( 'Markdown editor', 'universal-markdown-editor' ) }
+			onRequestClose={ onRequestClose }
+			isFullScreen
+			className="ume-workspace-modal"
+		>
+			{ children }
+		</Modal>
+	);
+}
+
+function MarkdownWorkspace( { postId, initialContent, inlineHost, onClose } ) {
 	const [ source, setSource ] = useState( '' );
 	const [ baseline, setBaseline ] = useState( '' );
 	const [ session, setSession ] = useState( null );
@@ -528,77 +592,75 @@ function MarkdownWorkspace( { postId, initialContent, onClose } ) {
 
 	if ( loadError ) {
 		return (
-			<Modal
-				title={ __( 'Markdown editor', 'universal-markdown-editor' ) }
+			<WorkspaceSurface
+				inlineHost={ inlineHost }
 				onRequestClose={ onClose }
 			>
-				<Notice status="error" isDismissible={ false }>
-					{ loadError }
-				</Notice>
-				<Button variant="secondary" onClick={ onClose }>
-					{ __( 'Close', 'universal-markdown-editor' ) }
-				</Button>
-			</Modal>
+				<div className="ume-import-prompt">
+					<Notice status="error" isDismissible={ false }>
+						{ loadError }
+					</Notice>
+					<Button variant="secondary" onClick={ onClose }>
+						{ __( 'Close', 'universal-markdown-editor' ) }
+					</Button>
+				</div>
+			</WorkspaceSurface>
 		);
 	}
 
 	if ( ! session ) {
 		return (
-			<Modal
-				title={ __( 'Markdown editor', 'universal-markdown-editor' ) }
+			<WorkspaceSurface
+				inlineHost={ inlineHost }
 				onRequestClose={ onClose }
 			>
-				<Spinner />
-			</Modal>
+				<div className="ume-inline-loading">
+					<Spinner />
+					<Button variant="secondary" onClick={ onClose }>
+						{ __( 'Close', 'universal-markdown-editor' ) }
+					</Button>
+				</div>
+			</WorkspaceSurface>
 		);
 	}
 
 	if ( prompt === 'complex' ) {
 		return (
-			<>
-				<Modal
-					title={ __(
-						'Markdown editor',
-						'universal-markdown-editor'
-					) }
-					onRequestClose={ onClose }
-					isFullScreen
-					className="ume-workspace-modal"
-				>
-					<div className="ume-import-prompt">
-						<Notice status="warning" isDismissible={ false }>
+			<WorkspaceSurface
+				inlineHost={ inlineHost }
+				onRequestClose={ onClose }
+			>
+				<div className="ume-import-prompt">
+					<Notice status="warning" isDismissible={ false }>
+						{ __(
+							'This post contains WordPress blocks, HTML, or shortcodes. It cannot be converted losslessly. The original content will remain unchanged.',
+							'universal-markdown-editor'
+						) }
+					</Notice>
+					<div className="ume-prompt-actions">
+						<Button variant="secondary" onClick={ onClose }>
+							{ __( 'Cancel', 'universal-markdown-editor' ) }
+						</Button>
+						<Button
+							variant="primary"
+							onClick={ () => beginEditing( '' ) }
+						>
 							{ __(
-								'This post contains WordPress blocks, HTML, or shortcodes. It cannot be converted losslessly. The original content will remain unchanged.',
+								'Start with empty Markdown',
 								'universal-markdown-editor'
 							) }
-						</Notice>
-						<div className="ume-prompt-actions">
-							<Button variant="secondary" onClick={ onClose }>
-								{ __( 'Cancel', 'universal-markdown-editor' ) }
-							</Button>
-							<Button
-								variant="primary"
-								onClick={ () => beginEditing( '' ) }
-							>
-								{ __(
-									'Start with empty Markdown',
-									'universal-markdown-editor'
-								) }
-							</Button>
-						</div>
+						</Button>
 					</div>
-				</Modal>
-			</>
+				</div>
+			</WorkspaceSurface>
 		);
 	}
 
 	if ( prompt === 'import' ) {
 		return (
-			<Modal
-				title={ __( 'Markdown editor', 'universal-markdown-editor' ) }
+			<WorkspaceSurface
+				inlineHost={ inlineHost }
 				onRequestClose={ onClose }
-				isFullScreen
-				className="ume-workspace-modal"
 			>
 				<div className="ume-import-prompt">
 					<p>
@@ -628,17 +690,15 @@ function MarkdownWorkspace( { postId, initialContent, onClose } ) {
 						</Button>
 					</div>
 				</div>
-			</Modal>
+			</WorkspaceSurface>
 		);
 	}
 
 	return (
 		<>
-			<Modal
-				title={ __( 'Markdown editor', 'universal-markdown-editor' ) }
+			<WorkspaceSurface
+				inlineHost={ inlineHost }
 				onRequestClose={ requestClose }
-				isFullScreen
-				className="ume-workspace-modal"
 			>
 				<div className="ume-workspace">
 					<div className="ume-workspace-header">
@@ -919,7 +979,7 @@ function MarkdownWorkspace( { postId, initialContent, onClose } ) {
 						</div>
 					</div>
 				</div>
-			</Modal>
+			</WorkspaceSurface>
 			{ linkDialog && (
 				<Modal
 					title={ __( 'Insert link', 'universal-markdown-editor' ) }
@@ -1004,6 +1064,7 @@ function MarkdownWorkspace( { postId, initialContent, onClose } ) {
 
 function MarkdownEditorPlugin() {
 	const [ isOpen, setIsOpen ] = useState( false );
+	const [ inlineHost, setInlineHost ] = useState( null );
 	const [ sidebarNotice, setSidebarNotice ] = useState( '' );
 	const editorState = useSelect( ( select ) => {
 		const editor = select( 'core/editor' );
@@ -1039,7 +1100,13 @@ function MarkdownEditorPlugin() {
 			);
 			return;
 		}
+		setInlineHost( findInlineWorkspaceHost( window.document ) );
 		setIsOpen( true );
+	};
+
+	const closeWorkspace = () => {
+		setIsOpen( false );
+		setInlineHost( null );
 	};
 
 	return (
@@ -1067,7 +1134,8 @@ function MarkdownEditorPlugin() {
 					key={ editorState.postId }
 					postId={ Number( editorState.postId ) }
 					initialContent={ editorState.content }
-					onClose={ () => setIsOpen( false ) }
+					inlineHost={ inlineHost }
+					onClose={ closeWorkspace }
 				/>
 			) }
 		</>

@@ -3,13 +3,6 @@
 }
 
 .ume-workspace-modal {
-    --ume-editor-surface: #ffffff;
-    --ume-editor-border: #c3c4c7;
-    --ume-editor-border-strong: #8c8f94;
-    --ume-editor-muted: #50575e;
-    --ume-editor-focus: #2271b1;
-    --ume-editor-hover: #f0f0f1;
-
     .components-modal__frame {
         height: calc(100vh - 32px);
         max-height: calc(100vh - 32px);
@@ -38,12 +31,55 @@
     }
 }
 
+.ume-workspace,
+.ume-inline-workspace {
+    --ume-editor-surface: #ffffff;
+    --ume-editor-border: #c3c4c7;
+    --ume-editor-border-strong: #8c8f94;
+    --ume-editor-muted: #50575e;
+    --ume-editor-focus: #2271b1;
+    --ume-editor-hover: #f0f0f1;
+}
+
 .ume-workspace {
     display: flex;
     flex: 1 1 auto;
     flex-direction: column;
     min-height: 0;
     padding: 0 20px;
+}
+
+.ume-inline-workspace-host {
+    overflow: hidden !important;
+    position: relative !important;
+}
+
+.ume-inline-workspace-host > :not(.ume-inline-workspace) {
+    visibility: hidden;
+}
+
+.ume-inline-workspace {
+    background: var(--ume-editor-surface);
+    display: flex;
+    flex-direction: column;
+    inset: 0;
+    min-height: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: 50;
+}
+
+.ume-inline-workspace > .ume-workspace {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.ume-inline-loading {
+    align-items: center;
+    display: flex;
+    flex: 1 1 auto;
+    gap: 12px;
+    justify-content: center;
 }
 
 .ume-workspace-header {
