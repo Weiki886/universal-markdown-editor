@@ -6,7 +6,7 @@ export default function MarkdownBrandIcon() {
 			fill="none"
 			focusable="false"
 			height="24"
-			viewBox="0 0 64 64"
+			viewBox="0 0 24 24"
 			width="24"
 			xmlns="http://www.w3.org/2000/svg"
 		>
@@ -14,15 +14,16 @@ export default function MarkdownBrandIcon() {
 				stroke="currentColor"
 				strokeLinecap="round"
 				strokeLinejoin="round"
-				strokeWidth="2.6"
+				strokeWidth="1.8"
 			>
-				<path d="M49 43V13a5 5 0 0 0-5-5H12a5 5 0 0 0-5 5v37a5 5 0 0 0 5 5h27" />
-				<path d="M7 18h42" />
-				<path d="M14 39V27l6 8 6-8v12" />
-				<path d="M32 27v12m-4-4 4 4 4-4" />
-				<path d="M39 27h5M39 33h5" />
-				<path d="m40 51 13-13a3 3 0 0 1 4 0l1 1a3 3 0 0 1 0 4L45 56l-8 2z" />
-				<path d="m49 42 5 5" />
+				<path d="M5.4 3.3h13.2A2.4 2.4 0 0 1 21 5.7v9.2" />
+				<path d="M21 7.1H3" />
+				<path d="M3 5.7v11.4a2.4 2.4 0 0 0 2.4 2.4h10.2" />
+				<path d="M4.6 16.2v-4.3l1.7 2.1 1.7-2.1v4.3" />
+				<path d="M9.8 12.1v4m-1.2-1.2 1.2 1.2 1.2-1.2" />
+				<path d="M13 11.8h4.6M13 14.8h4.6M13 17.8h2.7" />
+				<path d="m16.8 21.6.6-2.2 3.5-3.5 1.6 1.6-3.5 3.5-2.2.6Z" />
+				<path d="m17.4 19.4 1.6 1.6" />
 			</g>
 		</svg>
 	);
