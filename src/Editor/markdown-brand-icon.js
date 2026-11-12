@@ -11,19 +11,19 @@ export default function MarkdownBrandIcon() {
 			xmlns="http://www.w3.org/2000/svg"
 		>
 			<g
+				fill="none"
 				stroke="currentColor"
 				strokeLinecap="round"
 				strokeLinejoin="round"
 				strokeWidth="1.8"
 			>
-				<path d="M5.4 3.3h13.2A2.4 2.4 0 0 1 21 5.7v9.2" />
-				<path d="M21 7.1H3" />
-				<path d="M3 5.7v11.4a2.4 2.4 0 0 0 2.4 2.4h10.2" />
-				<path d="M4.6 16.2v-4.3l1.7 2.1 1.7-2.1v4.3" />
-				<path d="M9.8 12.1v4m-1.2-1.2 1.2 1.2 1.2-1.2" />
-				<path d="M13 11.8h4.6M13 14.8h4.6M13 17.8h2.7" />
-				<path d="m16.8 21.6.6-2.2 3.5-3.5 1.6 1.6-3.5 3.5-2.2.6Z" />
-				<path d="m17.4 19.4 1.6 1.6" />
+				{ /* Keep paths unfilled when WordPress sets fill on toolbar SVGs. */ }
+				<path
+					d="M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
+					fill="none"
+				/>
+				<path d="M6 15V9l2.5 3L11 9v6" fill="none" />
+				<path d="M16.5 9v6m-2-2 2 2 2-2" fill="none" />
 			</g>
 		</svg>
 	);
