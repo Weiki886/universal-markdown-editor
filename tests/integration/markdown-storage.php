@@ -33,6 +33,7 @@ foreach ([
     '_ume_converter_version',
     '_ume_content_hash',
     '_ume_saved_source_hash',
+    '_ume_preserved_blocks',
 ] as $metaKey) {
     $definition = $registeredMeta[$metaKey] ?? [];
     $check(($definition['single'] ?? false) === true, "{$metaKey} is not registered as a single value.");
@@ -69,6 +70,126 @@ $check(
 );
 $check(is_array($unmanaged) && ($unmanaged['html'] ?? null) === '<p>Existing HTML</p>', 'The ordinary post HTML was not returned as the preview baseline.');
 $check(is_array($unmanaged) && ($unmanaged['contentHash'] ?? null) === hash('sha256', '<p>Existing HTML</p>'), 'The unmanaged content hash is incorrect.');
+
+$opaqueCallout = '<!-- wp:vendor/callout  { "tone" : "notice" } -->'
+    . '<div class="callout">Keep this block</div><!-- /wp:vendor/callout -->';
+$opaqueCard = '<!-- wp:vendor/card { "id" : "second" } -->'
+    . '<div class="card">Keep second block<!-- wp:paragraph --><p>Nested content</p><!-- /wp:paragraph --></div>'
+    . '<!-- /wp:vendor/card -->';
+$opaqueDynamic = '<!-- wp:vendor/dynamic { "query" : "x" } /-->';
+$gutenbergContent = '<!-- wp:paragraph --><p>Before block</p><!-- /wp:paragraph -->'
+    . "\n\n"
+    . $opaqueCallout
+    . "\n\n"
+    . $opaqueCard
+    . "\n\n"
+    . $opaqueDynamic
+    . "\n\n"
+    . '<!-- wp:heading {"level":2} --><h2 class="wp-block-heading">After block</h2><!-- /wp:heading -->';
+$gutenbergId = wp_insert_post([
+    'post_type' => 'post',
+    'post_status' => 'draft',
+    'post_title' => 'Gutenberg preservation fixture',
+    'post_content' => $gutenbergContent,
+    'post_author' => (int) $adminIds[0],
+]);
+$gutenbergBefore = get_post($gutenbergId);
+$gutenbergMetaBefore = get_post_meta($gutenbergId);
+$gutenbergSessionResponse = $request('GET', $gutenbergId);
+$gutenbergSession = $gutenbergSessionResponse->get_data();
+$expectedImport = "Before block\n\n<!-- ume-preserved-block:0 -->\n\n<!-- ume-preserved-block:1 -->\n\n<!-- ume-preserved-block:2 -->\n\n## After block";
+$check($gutenbergSessionResponse->get_status() === 200, 'A Gutenberg post could not be loaded for Markdown import.');
+$check(($gutenbergSession['importSource'] ?? null) === $expectedImport, 'Supported blocks were not imported around an opaque block marker.');
+$check(($gutenbergSession['preservedBlockCount'] ?? null) === 3, 'The opaque block count is incorrect.');
+$check(get_post_field('post_content', $gutenbergId) === $gutenbergBefore->post_content, 'Opening a Gutenberg import changed post_content.');
+$check(get_post_meta($gutenbergId) === $gutenbergMetaBefore, 'Opening a Gutenberg import changed post metadata.');
+
+$previewRequest = new WP_REST_Request('POST', '/ume/v1/posts/' . $gutenbergId . '/markdown/preview');
+$previewRequest->set_header('content-type', 'application/json');
+$previewRequest->set_body(wp_json_encode(['source' => "Before edit\n\n<!-- ume-preserved-block:0 -->\n\n<!-- ume-preserved-block:1 -->\n\n<!-- ume-preserved-block:2 -->\n\n## After edit"]));
+$gutenbergPreviewResponse = rest_do_request($previewRequest);
+$gutenbergPreview = $gutenbergPreviewResponse->get_data();
+$check($gutenbergPreviewResponse->get_status() === 200, 'A mixed Gutenberg/Markdown preview was rejected.');
+$check(strpos($gutenbergPreview['html'] ?? '', $opaqueCallout) !== false, 'The preview did not restore the exact opaque block serialization.');
+$check(strpos($gutenbergPreview['html'] ?? '', $opaqueCard) !== false, 'The preview did not restore the exact nested opaque block serialization.');
+$check(strpos($gutenbergPreview['html'] ?? '', $opaqueDynamic) !== false, 'The preview did not restore the exact self-closing block serialization.');
+$check(get_post_field('post_content', $gutenbergId) === $gutenbergBefore->post_content, 'Previewing a mixed post changed post_content.');
+$check(get_post_meta($gutenbergId) === $gutenbergMetaBefore, 'Previewing a mixed post changed post metadata.');
+
+$revisionsBeforeRejectedSave = count(wp_get_post_revisions($gutenbergId));
+$invalidGutenbergSave = $request('PUT', $gutenbergId, [
+    'source' => 'Before edit' . "\n\n" . '## After edit',
+    'baseContentHash' => $gutenbergSession['contentHash'] ?? '',
+    'baseModifiedGmt' => $gutenbergSession['modifiedGmt'] ?? '',
+]);
+$check($invalidGutenbergSave->get_status() === 400, 'A save that omitted a protected block marker was accepted.');
+$check(get_post_field('post_content', $gutenbergId) === $gutenbergBefore->post_content, 'A rejected Gutenberg save changed post_content.');
+$check(get_post_meta($gutenbergId) === $gutenbergMetaBefore, 'A rejected Gutenberg save changed post metadata.');
+$check(count(wp_get_post_revisions($gutenbergId)) === $revisionsBeforeRejectedSave, 'A rejected Gutenberg save created a revision.');
+
+$validGutenbergSource = "Before edit\n\n<!-- ume-preserved-block:0 -->\n\n<!-- ume-preserved-block:1 -->\n\n<!-- ume-preserved-block:2 -->\n\n## After edit";
+$validGutenbergSave = $request('PUT', $gutenbergId, [
+    'source' => $validGutenbergSource,
+    'baseContentHash' => $gutenbergSession['contentHash'] ?? '',
+    'baseModifiedGmt' => $gutenbergSession['modifiedGmt'] ?? '',
+]);
+$validGutenbergSaved = $validGutenbergSave->get_data();
+$gutenbergSavedContent = get_post_field('post_content', $gutenbergId);
+$check($validGutenbergSave->get_status() === 200, 'A valid mixed Gutenberg/Markdown save failed.');
+$check(strpos($gutenbergSavedContent, $opaqueCallout) !== false, 'Saving Markdown did not preserve the exact opaque block serialization.');
+$check(strpos($gutenbergSavedContent, $opaqueCard) !== false, 'Saving Markdown did not preserve the exact nested opaque block serialization.');
+$check(strpos($gutenbergSavedContent, $opaqueDynamic) !== false, 'Saving Markdown did not preserve the exact self-closing block serialization.');
+$check(strpos($gutenbergSavedContent, '<p>Before edit</p>') < strpos($gutenbergSavedContent, '<!-- wp:vendor/callout'), 'The opaque block moved before its preceding Markdown.');
+$check(strpos($gutenbergSavedContent, '<!-- wp:vendor/callout') < strpos($gutenbergSavedContent, '<h2>After edit</h2>'), 'The opaque block moved after its following Markdown.');
+$check(($validGutenbergSaved['source'] ?? null) === $validGutenbergSource, 'The mixed Markdown source was not stored exactly.');
+$storedBlocks = json_decode((string) get_post_meta($gutenbergId, '_ume_preserved_blocks', true), true);
+$check(is_array($storedBlocks) && count($storedBlocks) === 3, 'Protected block data was not stored in private metadata.');
+$gutenbergRevision = null;
+foreach (wp_get_post_revisions($gutenbergId) as $revision) {
+    if ($revision->post_content === $gutenbergSavedContent) {
+        $gutenbergRevision = $revision;
+        break;
+    }
+}
+$check(
+    $gutenbergRevision instanceof WP_Post
+        && get_post_meta($gutenbergRevision->ID, '_ume_preserved_blocks', true) === get_post_meta($gutenbergId, '_ume_preserved_blocks', true),
+    'The protected block mapping was not included in the matching WordPress revision.'
+);
+
+$revisionsBeforeTampering = count(wp_get_post_revisions($gutenbergId));
+$metadataBeforeTampering = get_post_meta($gutenbergId);
+$tamperedGutenbergSave = $request('PUT', $gutenbergId, [
+    'source' => "Before edit\n\n<!-- ume-preserved-block:0 -->\n\n<!-- ume-preserved-block:0 -->\n\n<!-- ume-preserved-block:2 -->\n\n## After edit",
+    'baseContentHash' => $validGutenbergSaved['contentHash'] ?? '',
+    'baseModifiedGmt' => $validGutenbergSaved['modifiedGmt'] ?? '',
+    'baseSourceHash' => $validGutenbergSaved['sourceHash'] ?? null,
+]);
+$check($tamperedGutenbergSave->get_status() === 400, 'A duplicated opaque block marker was accepted.');
+$check(get_post_field('post_content', $gutenbergId) === $gutenbergSavedContent, 'A rejected tampered save changed post_content.');
+$check(get_post_meta($gutenbergId) === $metadataBeforeTampering, 'A rejected tampered save changed post metadata.');
+$check(count(wp_get_post_revisions($gutenbergId)) === $revisionsBeforeTampering, 'A rejected tampered save created a revision.');
+$reorderedGutenbergSave = $request('PUT', $gutenbergId, [
+    'source' => "Before edit\n\n<!-- ume-preserved-block:1 -->\n\n<!-- ume-preserved-block:0 -->\n\n<!-- ume-preserved-block:2 -->\n\n## After edit",
+    'baseContentHash' => $validGutenbergSaved['contentHash'] ?? '',
+    'baseModifiedGmt' => $validGutenbergSaved['modifiedGmt'] ?? '',
+    'baseSourceHash' => $validGutenbergSaved['sourceHash'] ?? null,
+]);
+$check($reorderedGutenbergSave->get_status() === 400, 'Reordered opaque block markers were accepted.');
+$check(get_post_field('post_content', $gutenbergId) === $gutenbergSavedContent, 'A rejected reordered save changed post_content.');
+$check(count(wp_get_post_revisions($gutenbergId)) === $revisionsBeforeTampering, 'A rejected reordered save created a revision.');
+$inlineGutenbergSave = $request('PUT', $gutenbergId, [
+    'source' => "Before edit <!-- ume-preserved-block:0 -->\n\n<!-- ume-preserved-block:1 -->\n\n<!-- ume-preserved-block:2 -->\n\n## After edit",
+    'baseContentHash' => $validGutenbergSaved['contentHash'] ?? '',
+    'baseModifiedGmt' => $validGutenbergSaved['modifiedGmt'] ?? '',
+    'baseSourceHash' => $validGutenbergSaved['sourceHash'] ?? null,
+]);
+$check($inlineGutenbergSave->get_status() === 400, 'An inline opaque block marker was accepted.');
+$check(get_post_field('post_content', $gutenbergId) === $gutenbergSavedContent, 'A rejected inline-marker save changed post_content.');
+$check(get_post_meta($gutenbergId) === $metadataBeforeTampering, 'A rejected inline-marker save changed post metadata.');
+$check(count(wp_get_post_revisions($gutenbergId)) === $revisionsBeforeTampering, 'A rejected inline-marker save created a revision.');
+
+wp_delete_post($gutenbergId, true);
 
 $lockOption = 'ume_markdown_save_lock_' . $existingId;
 add_option($lockOption, ['token' => 'expired-request', 'expires' => time() - 1], '', false);
@@ -109,6 +230,7 @@ foreach ($revisions as $revision) {
     if (
         $revision->post_content === $expectedHtml
         && get_post_meta($revision->ID, '_ume_markdown_source', true) === $source
+        && get_post_meta($revision->ID, '_ume_preserved_blocks', true) === '[]'
     ) {
         $matchingRevisionFound = true;
         break;

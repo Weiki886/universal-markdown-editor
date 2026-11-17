@@ -344,3 +344,31 @@ msgstr "打开 Markdown 模式前请先在 Gutenberg 中保存文章。"
 #: src/index.js:945
 msgid "Open Markdown workspace"
 msgstr "打开 Markdown 工作区"
+
+#: src/index.js
+msgid "Gutenberg content could not be imported safely. No post data was changed."
+msgstr "无法安全导入 Gutenberg 内容。文章数据未被更改。"
+
+#: src/index.js
+msgid "Supported plain paragraphs and headings will be imported as Markdown. Other Gutenberg blocks will remain as protected placeholders in their original order."
+msgstr "支持的纯文本段落和标题将导入为 Markdown。其他 Gutenberg 区块将以受保护的占位标记按原顺序保留。"
+
+#: src/index.js
+msgid "Import blocks"
+msgstr "导入区块"
+
+#: src/Post/SaveService.php
+msgid "Preserved Gutenberg block data is invalid. The post was not changed."
+msgstr "保留的 Gutenberg 区块数据无效。文章未被更改。"
+
+#: src/Post/SaveService.php
+msgid "Preserved Gutenberg block data is invalid."
+msgstr "保留的 Gutenberg 区块数据无效。"
+
+#: src/Post/SaveService.php
+msgid "Markdown could not be previewed safely."
+msgstr "无法安全预览 Markdown。"
+
+#: src/Post/SaveService.php
+msgid "Markdown source is invalid or its preserved block references were changed."
+msgstr "Markdown 源无效，或保留区块的引用已被更改。"

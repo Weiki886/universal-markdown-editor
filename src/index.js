@@ -21,11 +21,13 @@ import {
 	useState,
 } from '@wordpress/element';
 import { PluginSidebar } from '@wordpress/edit-post';
+import { parse as parseRawBlocks } from '@wordpress/block-serialization-default-parser';
 import { registerPlugin } from '@wordpress/plugins';
 import { __ } from '@wordpress/i18n';
 /* eslint-enable import/no-unresolved, import/no-extraneous-dependencies */
 import { createPreviewRequest } from './Editor/preview-request';
 import { createPreviewSync } from './Editor/preview-sync';
+import { prepareGutenbergImport } from './Editor/gutenberg-import';
 import MarkdownBrandIcon from './Editor/markdown-brand-icon';
 import {
 	activateInlineWorkspaceHost,
@@ -39,6 +41,7 @@ import {
 	isSafeLinkUrl,
 } from './Editor/markdown-toolbar';
 import { isComplexContent } from './Editor/source-classification';
+import { activateWorkspace } from './Editor/workspace-entry';
 
 apiFetch.use( apiFetch.createRootURLMiddleware( window.umeSettings.root ) );
 apiFetch.use( apiFetch.createNonceMiddleware( window.umeSettings.nonce ) );
@@ -256,6 +259,28 @@ function MarkdownWorkspace( { postId, initialContent, inlineHost, onClose } ) {
 				setOriginalContent( result.html || '' );
 				if ( result.managed ) {
 					beginEditing( result.source );
+					return;
+				}
+				if ( typeof result.importSource === 'string' ) {
+					try {
+						const blocks = parseRawBlocks( result.html || '' );
+						if ( ! Array.isArray( blocks ) ) {
+							throw new Error( 'Block parser is unavailable.' );
+						}
+						const imported = prepareGutenbergImport(
+							blocks,
+							result.importSource
+						);
+						beginEditing( imported.source );
+					} catch {
+						setLoadError(
+							__(
+								'Gutenberg content could not be imported safely. No post data was changed.',
+								'universal-markdown-editor'
+							)
+						);
+						return;
+					}
 					return;
 				}
 				if ( result.html.trim() === '' ) {
@@ -1066,7 +1091,8 @@ function MarkdownWorkspace( { postId, initialContent, inlineHost, onClose } ) {
 function MarkdownEditorPlugin() {
 	const [ isOpen, setIsOpen ] = useState( false );
 	const [ inlineHost, setInlineHost ] = useState( null );
-	const [ sidebarNotice, setSidebarNotice ] = useState( '' );
+	const { closeGeneralSidebar } = useDispatch( 'core/edit-post' );
+	const { createWarningNotice } = useDispatch( 'core/notices' );
 	const editorState = useSelect( ( select ) => {
 		const editor = select( 'core/editor' );
 
@@ -1075,35 +1101,46 @@ function MarkdownEditorPlugin() {
 			postId: editor.getCurrentPostId(),
 			content: editor.getEditedPostContent() || '',
 			status: editor.getCurrentPostAttribute( 'status' ),
+			activeSidebar:
+				select( 'core/edit-post' ).getActiveGeneralSidebarName(),
 		};
 	}, [] );
 
-	const openWorkspace = () => {
-		setSidebarNotice( '' );
-		if ( editorState.isDirty ) {
-			setSidebarNotice(
-				__(
-					'Save your Gutenberg changes before opening Markdown mode.',
-					'universal-markdown-editor'
-				)
-			);
-			return;
-		}
-		if (
-			! Number.isInteger( Number( editorState.postId ) ) ||
-			Number( editorState.postId ) <= 0
-		) {
-			setSidebarNotice(
-				__(
-					'Save the post in Gutenberg before opening Markdown mode.',
-					'universal-markdown-editor'
-				)
-			);
-			return;
-		}
-		setInlineHost( findInlineWorkspaceHost( window.document ) );
-		setIsOpen( true );
-	};
+	useEffect( () => {
+		activateWorkspace( {
+			active:
+				editorState.activeSidebar ===
+				'ume-markdown-editor/ume-markdown-sidebar',
+			isOpen,
+			isDirty: editorState.isDirty,
+			postId: editorState.postId,
+			closeSidebar: closeGeneralSidebar,
+			openWorkspace: () => {
+				setInlineHost( findInlineWorkspaceHost( window.document ) );
+				setIsOpen( true );
+			},
+			warn: ( reason ) => {
+				const message =
+					reason === 'dirty'
+						? __(
+								'Save your Gutenberg changes before opening Markdown mode.',
+								'universal-markdown-editor'
+							)
+						: __(
+								'Save the post in Gutenberg before opening Markdown mode.',
+								'universal-markdown-editor'
+							);
+				createWarningNotice( message, { type: 'snackbar' } );
+			},
+		} );
+	}, [
+		editorState.activeSidebar,
+		editorState.isDirty,
+		editorState.postId,
+		isOpen,
+		closeGeneralSidebar,
+		createWarningNotice,
+	] );
 
 	const closeWorkspace = () => {
 		setIsOpen( false );
@@ -1116,21 +1153,7 @@ function MarkdownEditorPlugin() {
 				icon={ <MarkdownBrandIcon /> }
 				name="ume-markdown-sidebar"
 				title={ __( 'Markdown editor', 'universal-markdown-editor' ) }
-			>
-				{ sidebarNotice && (
-					<Notice status="warning" isDismissible={ false }>
-						{ sidebarNotice }
-					</Notice>
-				) }
-				<div className="ume-sidebar-content">
-					<Button variant="primary" onClick={ openWorkspace }>
-						{ __(
-							'Open Markdown workspace',
-							'universal-markdown-editor'
-						) }
-					</Button>
-				</div>
-			</PluginSidebar>
+			></PluginSidebar>
 			{ isOpen && (
 				<MarkdownWorkspace
 					key={ editorState.postId }

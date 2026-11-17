@@ -24,6 +24,23 @@ recovery, media capability wiring, and bundled PHP and JavaScript localization
 for `en_US` and `zh_CN`. Do not describe a run that did not use WordPress as an
 integration test.
 
+Issue #36 extends the storage integration suite with mixed Gutenberg/Markdown
+fixtures. It verifies supported paragraph/heading import; exact source-slice
+preservation for custom, nested, and self-closing blocks; marker integrity and
+ordering; read-only preview; rejected-save no-write and no-revision behavior;
+and revision storage of the private block map.
+
+The browser import adapter must consume raw serialized blocks from
+`@wordpress/block-serialization-default-parser`, matching PHP `parse_blocks()`.
+Do not substitute `wp.blocks.parse()`: it returns normalized editor blocks,
+adds default attributes, and omits raw HTML fields and freeform separators.
+JavaScript regressions cover raw paragraph/empty-paragraph sequences, heading
+levels, normalized-shape rejection, and strict comparison with server source.
+For browser verification, open an existing saved Gutenberg post through the
+Markdown toolbar icon, compare the textarea with the REST `importSource`, check
+that preview renders without the import error or intermediate sidebar, and
+compare stored HTML and its content hash before and after opening without saving.
+
 ## Translation Regeneration
 
 The repository ships `universal-markdown-editor.pot`,
@@ -180,8 +197,13 @@ verify in a clean disposable WordPress installation:
   standard HTML match.
 - Open an existing plain-text post; cancel the import prompt and confirm the
   post is unchanged, then test import on a separate fixture.
-- Open a block/HTML/shortcode post; confirm the lossless-conversion warning,
-  cancel, and verify the original remains unchanged.
+- Open a Gutenberg post containing plain paragraphs/headings and opaque blocks;
+  confirm the import prompt and protected markers, save a separate fixture,
+  then verify block order, block attributes, revisions, and front-end rendering.
+- Attempt to remove, duplicate, reorder, or inline a protected marker; confirm
+  the save is rejected and the post plus plugin metadata remain unchanged.
+- Confirm rich-text/styled paragraphs, lists, media, shortcodes, embeds,
+  dynamic blocks, and third-party blocks remain protected rather than flattened.
 - Open Markdown mode on a supported Gutenberg editor layout; confirm the
   WordPress header and document sidebar remain visible, the Markdown surface
   replaces only the central canvas, live preview works, and exiting restores

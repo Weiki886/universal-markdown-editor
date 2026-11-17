@@ -12,6 +12,7 @@ final class MarkdownRepository
     public const CONVERTER_VERSION = '_ume_converter_version';
     public const CONTENT_HASH = '_ume_content_hash';
     public const SOURCE_HASH = '_ume_saved_source_hash';
+    public const PRESERVED_BLOCKS = '_ume_preserved_blocks';
 
     /** @var string[] */
     private const META_KEYS = [
@@ -20,6 +21,7 @@ final class MarkdownRepository
         self::CONVERTER_VERSION,
         self::CONTENT_HASH,
         self::SOURCE_HASH,
+        self::PRESERVED_BLOCKS,
     ];
 
     public static function registerMeta(): void
@@ -30,6 +32,7 @@ final class MarkdownRepository
             self::CONVERTER_VERSION => 'integer',
             self::CONTENT_HASH => 'string',
             self::SOURCE_HASH => 'string',
+            self::PRESERVED_BLOCKS => 'string',
         ];
 
         foreach ($definitions as $key => $type) {

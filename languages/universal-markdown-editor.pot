@@ -342,3 +342,31 @@ msgstr ""
 #: src/index.js:945
 msgid "Open Markdown workspace"
 msgstr ""
+
+#: src/index.js
+msgid "Gutenberg content could not be imported safely. No post data was changed."
+msgstr ""
+
+#: src/index.js
+msgid "Supported plain paragraphs and headings will be imported as Markdown. Other Gutenberg blocks will remain as protected placeholders in their original order."
+msgstr ""
+
+#: src/index.js
+msgid "Import blocks"
+msgstr ""
+
+#: src/Post/SaveService.php
+msgid "Preserved Gutenberg block data is invalid. The post was not changed."
+msgstr ""
+
+#: src/Post/SaveService.php
+msgid "Preserved Gutenberg block data is invalid."
+msgstr ""
+
+#: src/Post/SaveService.php
+msgid "Markdown could not be previewed safely."
+msgstr ""
+
+#: src/Post/SaveService.php
+msgid "Markdown source is invalid or its preserved block references were changed."
+msgstr ""

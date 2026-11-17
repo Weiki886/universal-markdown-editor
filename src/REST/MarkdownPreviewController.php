@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace UniversalMarkdownEditor\REST;
 
-use UniversalMarkdownEditor\Markdown\ConversionException;
 use UniversalMarkdownEditor\Markdown\Converter;
+use UniversalMarkdownEditor\Post\SaveService;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -71,27 +71,8 @@ final class MarkdownPreviewController
             );
         }
 
-        try {
-            $html = (new Converter())->convert($source);
-        } catch (ConversionException $exception) {
-            $invalidSource = $exception->errorCode() === ConversionException::INVALID_SOURCE;
+        $result = (new SaveService())->preview((int) $request['id'], $source);
 
-            return new WP_Error(
-                $invalidSource ? 'ume_invalid_source' : 'ume_parse_failed',
-                $invalidSource
-                    ? __('Markdown source is invalid.', 'universal-markdown-editor')
-                    : __('Markdown could not be converted.', 'universal-markdown-editor'),
-                ['status' => $invalidSource ? 400 : 422]
-            );
-        }
-
-        return new WP_REST_Response(
-            [
-                'html' => $html,
-                'converterVersion' => Converter::VERSION,
-                'sourceHash' => hash('sha256', $source),
-            ],
-            200
-        );
+        return is_wp_error($result) ? $result : new WP_REST_Response($result, 200);
     }
 }

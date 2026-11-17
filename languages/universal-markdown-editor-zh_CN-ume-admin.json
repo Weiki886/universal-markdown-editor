@@ -43,6 +43,15 @@
       "Markdown preview": [
         "Markdown 预览"
       ],
+      "Gutenberg content could not be imported safely. No post data was changed.": [
+        "无法安全导入 Gutenberg 内容。文章数据未被更改。"
+      ],
+      "Supported plain paragraphs and headings will be imported as Markdown. Other Gutenberg blocks will remain as protected placeholders in their original order.": [
+        "支持的纯文本段落和标题将导入为 Markdown。其他 Gutenberg 区块将以受保护的占位标记按原顺序保留。"
+      ],
+      "Import blocks": [
+        "导入区块"
+      ],
       "Could not load the Markdown session.": [
         "无法加载 Markdown 会话。"
       ],

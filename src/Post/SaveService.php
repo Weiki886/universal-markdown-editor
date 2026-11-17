@@ -14,11 +14,15 @@ final class SaveService
 
     private MarkdownRepository $repository;
     private Converter $converter;
+    private GutenbergImporter $importer;
+    private PreservedBlockRenderer $blockRenderer;
 
     public function __construct(?MarkdownRepository $repository = null, ?Converter $converter = null)
     {
         $this->repository = $repository ?? new MarkdownRepository();
         $this->converter = $converter ?? new Converter();
+        $this->importer = new GutenbergImporter();
+        $this->blockRenderer = new PreservedBlockRenderer($this->converter);
     }
 
     /** @return array<string, mixed>|WP_Error */
@@ -85,6 +89,16 @@ final class SaveService
             $actualSourceHash = null;
         }
 
+        $import = $managed ? null : $this->importer->import($post->post_content);
+        $blocks = $managed ? $this->decodePreservedBlocks($state[MarkdownRepository::PRESERVED_BLOCKS] ?? '') : [];
+        if ($managed && $blocks === null) {
+            return new WP_Error(
+                'ume_unsupported_version',
+                __('Preserved Gutenberg block data is invalid. The post was not changed.', 'universal-markdown-editor'),
+                ['status' => 422]
+            );
+        }
+
         return [
             'postId' => $postId,
             'managed' => $managed,
@@ -96,7 +110,47 @@ final class SaveService
             'sourceHash' => $actualSourceHash,
             'modifiedGmt' => $post->post_modified_gmt,
             'revisionsEnabled' => wp_revisions_enabled($post),
+            'importSource' => $import['source'] ?? null,
+            'preservedBlockCount' => count($import['blocks'] ?? $blocks ?? []),
         ];
+    }
+
+    /** @return array<string, mixed>|WP_Error */
+    public function preview(int $postId, string $source)
+    {
+        $session = $this->read($postId);
+        if (is_wp_error($session)) {
+            return $session;
+        }
+        $post = $this->repository->getPost($postId);
+        if (!$post instanceof WP_Post || $post->post_type !== 'post') {
+            return new WP_Error('ume_post_not_found', __('The requested post does not exist or is not supported.', 'universal-markdown-editor'), ['status' => 404]);
+        }
+
+        $state = $this->repository->getState($postId);
+        $managed = $session['managed'];
+        if ($managed) {
+            $blocks = $this->decodePreservedBlocks($state[MarkdownRepository::PRESERVED_BLOCKS] ?? '');
+            if ($blocks === null) {
+                return new WP_Error('ume_unsupported_version', __('Preserved Gutenberg block data is invalid.', 'universal-markdown-editor'), ['status' => 422]);
+            }
+        } else {
+            $import = $this->importer->import($post->post_content);
+            $blocks = $import['blocks'] ?? [];
+        }
+
+        try {
+            $html = $this->blockRenderer->render($source, $blocks);
+        } catch (ConversionException $exception) {
+            $invalidSource = $exception->errorCode() === ConversionException::INVALID_SOURCE;
+            return new WP_Error(
+                $invalidSource ? 'ume_invalid_source' : 'ume_parse_failed',
+                __('Markdown could not be previewed safely.', 'universal-markdown-editor'),
+                ['status' => $invalidSource ? 400 : 422]
+            );
+        }
+
+        return ['html' => $html, 'converterVersion' => Converter::VERSION, 'sourceHash' => hash('sha256', $source)];
     }
 
     /** @return array<string, mixed>|WP_Error */
@@ -110,23 +164,9 @@ final class SaveService
             );
         }
 
-        try {
-            $html = $this->converter->convert($source);
-        } catch (ConversionException $exception) {
-            $invalidSource = $exception->errorCode() === ConversionException::INVALID_SOURCE;
-
-            return new WP_Error(
-                $invalidSource ? 'ume_invalid_source' : 'ume_parse_failed',
-                $invalidSource
-                    ? __('Markdown source is invalid.', 'universal-markdown-editor')
-                    : __('Markdown could not be converted.', 'universal-markdown-editor'),
-                ['status' => $invalidSource ? 400 : 422]
-            );
-        }
-
         return $this->withPostLock(
             $postId,
-            fn () => $this->saveLocked($postId, $source, $baseContentHash, $baseModifiedGmt, $baseSourceHash, $html)
+            fn () => $this->saveLocked($postId, $source, $baseContentHash, $baseModifiedGmt, $baseSourceHash)
         );
     }
 
@@ -136,8 +176,7 @@ final class SaveService
         string $source,
         string $baseContentHash,
         string $baseModifiedGmt,
-        ?string $baseSourceHash,
-        string $html
+        ?string $baseSourceHash
     )
     {
         $post = $this->repository->getPost($postId);
@@ -182,6 +221,24 @@ final class SaveService
                 'ume_edit_conflict',
                 __('The post changed after this editing session started. Reload or copy your Markdown before saving again.', 'universal-markdown-editor'),
                 ['status' => 409]
+            );
+        }
+
+        $preservedBlocks = $managed
+            ? $this->decodePreservedBlocks($state[MarkdownRepository::PRESERVED_BLOCKS] ?? '')
+            : ($this->importer->import($post->post_content)['blocks'] ?? []);
+        if ($preservedBlocks === null) {
+            return new WP_Error('ume_unsupported_version', __('Preserved Gutenberg block data is invalid. The post was not changed.', 'universal-markdown-editor'), ['status' => 422]);
+        }
+
+        try {
+            $html = $this->blockRenderer->render($source, $preservedBlocks);
+        } catch (ConversionException $exception) {
+            $invalidSource = $exception->errorCode() === ConversionException::INVALID_SOURCE;
+            return new WP_Error(
+                $invalidSource ? 'ume_invalid_source' : 'ume_parse_failed',
+                $invalidSource ? __('Markdown source is invalid or its preserved block references were changed.', 'universal-markdown-editor') : __('Markdown could not be converted.', 'universal-markdown-editor'),
+                ['status' => $invalidSource ? 400 : 422]
             );
         }
 
@@ -234,6 +291,7 @@ final class SaveService
             MarkdownRepository::CONVERTER_VERSION => Converter::VERSION,
             MarkdownRepository::CONTENT_HASH => hash('sha256', $html),
             MarkdownRepository::SOURCE_HASH => hash('sha256', $source),
+            MarkdownRepository::PRESERVED_BLOCKS => wp_json_encode($preservedBlocks),
         ];
 
         if (!$this->repository->writeState($postId, $values)) {
@@ -262,6 +320,32 @@ final class SaveService
         return $saved;
     }
 
+    /** @return array<string, string>|null */
+    private function decodePreservedBlocks($value): ?array
+    {
+        if ($value === '' || $value === null) {
+            return [];
+        }
+        if (!is_string($value)) {
+            return null;
+        }
+
+        $blocks = json_decode($value, true);
+        if (!is_array($blocks)) {
+            return null;
+        }
+
+        $normalized = [];
+        foreach ($blocks as $key => $html) {
+            if ((!is_int($key) && (!is_string($key) || preg_match('/^\d+$/', $key) !== 1)) || !is_string($html) || $html === '') {
+                return null;
+            }
+            $normalized[(string) $key] = $html;
+        }
+
+        return $normalized;
+    }
+
     private function saveRevision(int $postId): bool
     {
         $includeMarkdownMeta = static function (bool $changed, WP_Post $revision, WP_Post $post): bool {
@@ -275,6 +359,7 @@ final class SaveService
                 MarkdownRepository::CONVERTER_VERSION,
                 MarkdownRepository::CONTENT_HASH,
                 MarkdownRepository::SOURCE_HASH,
+                MarkdownRepository::PRESERVED_BLOCKS,
             ] as $metaKey) {
                 if (
                     get_post_meta($revision->ID, $metaKey, false)
@@ -317,6 +402,7 @@ final class SaveService
             MarkdownRepository::CONVERTER_VERSION,
             MarkdownRepository::CONTENT_HASH,
             MarkdownRepository::SOURCE_HASH,
+            MarkdownRepository::PRESERVED_BLOCKS,
         ] as $metaKey) {
             if (get_post_meta($latestRevision->ID, $metaKey, false) !== get_post_meta($postId, $metaKey, false)) {
                 return false;
